@@ -113,9 +113,10 @@ class QuizSystem {
                     classes += ' selected';
                 }
                 
+                const inputId = `quizOption_${this.currentQuestionIndex}_${index}`;
                 optionsHTML += `
-                    <label class="${classes}" data-index="${index}">
-                        <input type="radio" name="quizOption" value="${index}" 
+                    <label class="${classes}" data-index="${index}" data-question="${this.currentQuestionIndex}" for="${inputId}">
+                        <input type="radio" id="${inputId}" name="quizOption_${this.currentQuestionIndex}" value="${index}" 
                                ${this.userAnswers[this.currentQuestionIndex] === index ? 'checked' : ''}>
                         <span class="option-letter">${letter}</span>
                         <span class="quiz-option-label">${option.text}</span>
@@ -146,8 +147,21 @@ class QuizSystem {
     }
     
     addOptionHandlers() {
-        const options = document.querySelectorAll('.quiz-option');
+        // Remove existing event listeners by cloning and replacing
+        const optionsContainer = document.getElementById('quizOptions');
+        if (!optionsContainer) return;
+        
+        const options = optionsContainer.querySelectorAll('.quiz-option');
+        
+        // Clone each option to remove existing event listeners
         options.forEach(option => {
+            const newOption = option.cloneNode(true);
+            optionsContainer.replaceChild(newOption, option);
+        });
+        
+        // Add new event listeners to the cloned options
+        const newOptions = optionsContainer.querySelectorAll('.quiz-option');
+        newOptions.forEach(option => {
             option.addEventListener('click', (e) => {
                 if (this.userAnswers[this.currentQuestionIndex] !== null) return;
                 
@@ -155,7 +169,7 @@ class QuizSystem {
                 this.userAnswers[this.currentQuestionIndex] = index;
                 
                 // Update UI
-                options.forEach(o => o.classList.remove('selected'));
+                newOptions.forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
                 
                 // Mark answer
@@ -269,9 +283,10 @@ class QuizSystem {
                 <div class="quiz-options" id="quizOptions">
                     ${this.currentQuiz.questions[this.currentQuestionIndex].options.map((option, index) => {
                         const letter = String.fromCharCode(65 + index);
+                        const inputId = `quizOption_${this.currentQuestionIndex}_${index}`;
                         return `
-                            <label class="quiz-option" data-index="${index}">
-                                <input type="radio" name="quizOption" value="${index}">
+                            <label class="quiz-option" data-index="${index}" data-question="${this.currentQuestionIndex}" for="${inputId}">
+                                <input type="radio" id="${inputId}" name="quizOption_${this.currentQuestionIndex}" value="${index}">
                                 <span class="option-letter">${letter}</span>
                                 <span class="quiz-option-label">${option.text}</span>
                             </label>
