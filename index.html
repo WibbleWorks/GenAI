@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative AI & Machine Learning Mastery - From 101 to PhD</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="course-container">
+        <!-- Header -->
+        <header class="course-header">
+            <div class="logo">
+                <span class="ai-icon">🤖</span>
+                <h1>Generative AI & ML Mastery</h1>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">Level 1: AI Basics</span>
+            </div>
+            <div class="user-stats">
+                <span class="score-display">Score: <span id="currentScore">0</span>%</span>
+                <span class="confidence-level">Confidence: <span id="confidenceLevel">0</span>%</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Navigation Sidebar -->
+            <nav class="sidebar">
+                <div class="nav-section">
+                    <h3>📚 Course Outline</h3>
+                    <ul class="nav-list" id="courseNav">
+                        <!-- Navigation will be populated by JavaScript -->
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h3>🎯 Quick Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Completed</span>
+                            <span class="stat-value" id="completedLessons">0</span>
+                            <span class="stat-subtext">lessons</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Mastered</span>
+                            <span class="stat-value" id="masteredTopics">0</span>
+                            <span class="stat-subtext">topics</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Score</span>
+                            <span class="stat-value" id="avgScore">0</span>%
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="lesson-container" id="lessonContainer">
+                    <!-- Lesson content will be loaded here -->
+                    <div class="loading-screen" id="loadingScreen">
+                        <div class="loading-content">
+                            <div class="spinner"></div>
+                            <h2>🤖 Loading AI Course...</h2>
+                            <p>Building your personalized learning journey...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Panel -->
+            <aside class="interactive-panel" id="interactivePanel">
+                <div class="panel-header">
+                    <h3>🎮 Interactive Lab</h3>
+                    <button class="toggle-btn" id="togglePanel">◀</button>
+                </div>
+                <div class="panel-content" id="panelContent">
+                    <div class="animation-container" id="animationContainer">
+                        <canvas id="aiCanvas" width="400" height="400"></canvas>
+                        <div class="animation-controls" id="animationControls">
+                            <!-- Animation controls will be populated -->
+                        </div>
+                    </div>
+                    <div class="quiz-container" id="quizContainer">
+                        <!-- Quiz content will be loaded here -->
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Modal for full-screen animations -->
+        <div class="modal" id="animationModal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <div class="full-animation" id="fullAnimation">
+                    <canvas id="fullCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Modal -->
+        <div class="modal" id="completionModal">
+            <div class="modal-content">
+                <h2>🎉 Congratulations!</h2>
+                <p id="completionMessage"></p>
+                <div class="final-stats">
+                    <div class="final-stat">
+                        <span class="stat-name">Final Score:</span>
+                        <span class="stat-number" id="finalScore">0</span>%
+                    </div>
+                    <div class="final-stat">
+                        <span class="stat-name">Time Spent:</span>
+                        <span class="stat-number" id="timeSpent">0</span> minutes
+                    </div>
+                    <div class="final-stat">
+                        <span class="stat-name">Topics Mastered:</span>
+                        <span class="stat-number" id="topicsMastered">0</span>
+                    </div>
+                </div>
+                <div class="weak-areas" id="weakAreasList">
+                    <h4>📋 Areas for Improvement:</h4>
+                    <ul id="weakAreas"></ul>
+                </div>
+                <button class="btn-primary" id="restartCourse">Start Over</button>
+                <button class="btn-secondary" id="continueLearning">Continue Learning</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="ai-animations.js"></script>
+    <script src="quiz-system.js"></script>
+    <script src="course-data.js"></script>
+    <script src="practical-examples.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
