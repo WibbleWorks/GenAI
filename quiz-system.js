@@ -95,37 +95,6 @@ class QuizSystem {
                 ${question.type === 'multiple-choice' ? '' : ''}
             `;
             
-            // Update options
-            let optionsHTML = '';
-            question.options.forEach((option, index) => {
-                const letter = String.fromCharCode(65 + index);
-                const isSelected = this.userAnswers[this.currentQuestionIndex] === index;
-                const isCorrect = this.userAnswers[this.currentQuestionIndex] !== null && 
-                                 question.options[option.isCorrect ? index : this.userAnswers[this.currentQuestionIndex]].isCorrect;
-                const isIncorrect = this.userAnswers[this.currentQuestionIndex] !== null && 
-                                   !option.isCorrect && this.userAnswers[this.currentQuestionIndex] === index;
-                
-                let classes = 'quiz-option';
-                if (this.userAnswers[this.currentQuestionIndex] !== null) {
-                    if (option.isCorrect) classes += ' correct';
-                    else if (this.userAnswers[this.currentQuestionIndex] === index) classes += ' incorrect';
-                } else if (isSelected) {
-                    classes += ' selected';
-                }
-                
-                const inputId = `quizOption_${this.currentQuestionIndex}_${index}`;
-                optionsHTML += `
-                    <label class="${classes}" data-index="${index}" data-question="${this.currentQuestionIndex}" for="${inputId}">
-                        <input type="radio" id="${inputId}" name="quizOption_${this.currentQuestionIndex}" value="${index}" 
-                               ${this.userAnswers[this.currentQuestionIndex] === index ? 'checked' : ''}>
-                        <span class="option-letter">${letter}</span>
-                        <span class="quiz-option-label">${option.text}</span>
-                    </label>
-                `;
-            });
-            
-            optionsElement.innerHTML = optionsHTML;
-            
             // Update progress
             if (progressElement) {
                 progressElement.textContent = `Question ${this.currentQuestionIndex + 1} of ${this.currentQuiz.questions.length}`;
@@ -141,46 +110,72 @@ class QuizSystem {
             // Update navigation buttons
             this.updateNavigation();
             
-            // Add click handlers
+            // Add click handlers (this will rebuild the options HTML and add event listeners)
             this.addOptionHandlers();
         }
     }
     
     addOptionHandlers() {
-        // Remove existing event listeners by cloning and replacing
+        // Remove existing event listeners by recreating the HTML
         const optionsContainer = document.getElementById('quizOptions');
         if (!optionsContainer) return;
         
-        const options = optionsContainer.querySelectorAll('.quiz-option');
+        // Get current question and user answers
+        const currentQIndex = this.currentQuestionIndex;
+        const question = this.currentQuiz.questions[currentQIndex];
         
-        // Clone each option to remove existing event listeners
-        options.forEach(option => {
-            const newOption = option.cloneNode(true);
-            optionsContainer.replaceChild(newOption, option);
+        // Rebuild the options HTML from scratch to avoid event listener conflicts
+        let optionsHTML = '';
+        question.options.forEach((option, index) => {
+            const letter = String.fromCharCode(65 + index);
+            const isSelected = this.userAnswers[currentQIndex] === index;
+            const inputId = `quizOption_${currentQIndex}_${index}`;
+            
+            let classes = 'quiz-option';
+            if (this.userAnswers[currentQIndex] !== null) {
+                if (option.isCorrect) classes += ' correct';
+                else if (this.userAnswers[currentQIndex] === index) classes += ' incorrect';
+            } else if (isSelected) {
+                classes += ' selected';
+            }
+            
+            optionsHTML += `
+                <label class="${classes}" data-index="${index}" data-question="${currentQIndex}" for="${inputId}">
+                    <input type="radio" id="${inputId}" name="quizOption_${currentQIndex}" value="${index}" 
+                           ${this.userAnswers[currentQIndex] === index ? 'checked' : ''}>
+                    <span class="option-letter">${letter}</span>
+                    <span class="quiz-option-label">${option.text}</span>
+                </label>
+            `;
         });
         
-        // Add new event listeners to the cloned options
+        // Replace the entire options container HTML
+        optionsContainer.innerHTML = optionsHTML;
+        
+        // Now add event listeners to the new options
         const newOptions = optionsContainer.querySelectorAll('.quiz-option');
+        const quizSystem = this; // Capture this for the event handler
+        
         newOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                if (this.userAnswers[this.currentQuestionIndex] !== null) return;
+            option.addEventListener('click', function(e) {
+                if (quizSystem.userAnswers[quizSystem.currentQuestionIndex] !== null) return;
                 
-                const index = parseInt(option.dataset.index);
-                this.userAnswers[this.currentQuestionIndex] = index;
+                const index = parseInt(this.dataset.index);
+                quizSystem.userAnswers[quizSystem.currentQuestionIndex] = index;
                 
                 // Update UI
                 newOptions.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
+                this.classList.add('selected');
                 
                 // Mark answer
-                const question = this.currentQuiz.questions[this.currentQuestionIndex];
+                const question = quizSystem.currentQuiz.questions[quizSystem.currentQuestionIndex];
                 if (question.options[index].isCorrect) {
-                    this.correctCount++;
-                    this.score += 100 / this.currentQuiz.questions.length;
+                    quizSystem.correctCount++;
+                    quizSystem.score += 100 / quizSystem.currentQuiz.questions.length;
                 } else {
                     // Track weak concept
-                    if (question.concept && !this.weakConcepts.includes(question.concept)) {
-                        this.weakConcepts.push(question.concept);
+                    if (question.concept && !quizSystem.weakConcepts.includes(question.concept)) {
+                        quizSystem.weakConcepts.push(question.concept);
                     }
                 }
             });

@@ -885,6 +885,9 @@ body {
 
 .quiz-option input {
     display: none;
+    /* Temporary: Make visible for debugging */
+    /* display: inline-block; */
+    /* margin-right: 8px; */
 }
 
 .quiz-option-label {
