@@ -164,17 +164,14 @@ class QuizSystem {
                 newOptions.forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
                 
-                // Mark answer
+                // Track weak concept if incorrect
                 const question = quizSystem.currentQuiz.questions[quizSystem.currentQuestionIndex];
-                if (question.options[index].isCorrect) {
-                    quizSystem.correctCount++;
-                    quizSystem.score += 100 / quizSystem.currentQuiz.questions.length;
-                } else {
-                    // Track weak concept
+                if (!question.options[index].isCorrect) {
                     if (question.concept && !quizSystem.weakConcepts.includes(question.concept)) {
                         quizSystem.weakConcepts.push(question.concept);
                     }
                 }
+                // Note: Score is calculated at the end, not incrementally
             });
         });
     }
@@ -220,13 +217,33 @@ class QuizSystem {
             this.timer = null;
         }
         
-        // Calculate final score
-        const finalScore = Math.round(this.score);
+        // Calculate final score by checking all answers
+        let correctCount = 0;
+        let weakConcepts = [...new Set(this.weakConcepts)]; // Deduplicate
+        
+        this.userAnswers.forEach((answerIndex, questionIndex) => {
+            if (answerIndex !== null) {
+                const question = this.currentQuiz.questions[questionIndex];
+                const option = question.options[answerIndex];
+                if (option && option.isCorrect) {
+                    correctCount++;
+                } else if (question.concept && !weakConcepts.includes(question.concept)) {
+                    weakConcepts.push(question.concept);
+                }
+            }
+        });
+        
+        const finalScore = Math.round((correctCount / this.currentQuiz.questions.length) * 100);
         
         // Prepare results
         const totalQuestions = this.currentQuiz.questions.length;
-        const correct = this.correctCount;
+        const correct = correctCount;
         const incorrect = totalQuestions - correct;
+        
+        // Update the instance variables for reporting
+        this.correctCount = correct;
+        this.score = finalScore;
+        this.weakConcepts = weakConcepts;
         
         // Show results
         if (this.quizContainer) {
