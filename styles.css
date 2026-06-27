@@ -883,11 +883,8 @@ body {
     border-color: var(--ai-red);
 }
 
-.quiz-option input {
-    display: none;
-    /* Temporary: Make visible for debugging */
-    /* display: inline-block; */
-    /* margin-right: 8px; */
+.quiz-option {
+    cursor: pointer;
 }
 
 .quiz-option-label {

@@ -129,7 +129,6 @@ class QuizSystem {
         question.options.forEach((option, index) => {
             const letter = String.fromCharCode(65 + index);
             const isSelected = this.userAnswers[currentQIndex] === index;
-            const inputId = `quizOption_${currentQIndex}_${index}`;
             
             let classes = 'quiz-option';
             if (this.userAnswers[currentQIndex] !== null) {
@@ -140,12 +139,10 @@ class QuizSystem {
             }
             
             optionsHTML += `
-                <label class="${classes}" data-index="${index}" data-question="${currentQIndex}" for="${inputId}">
-                    <input type="radio" id="${inputId}" name="quizOption_${currentQIndex}" value="${index}" 
-                           ${this.userAnswers[currentQIndex] === index ? 'checked' : ''}>
+                <div class="${classes}" data-index="${index}" data-question="${currentQIndex}" role="button" tabindex="0">
                     <span class="option-letter">${letter}</span>
                     <span class="quiz-option-label">${option.text}</span>
-                </label>
+                </div>
             `;
         });
         
@@ -278,13 +275,11 @@ class QuizSystem {
                 <div class="quiz-options" id="quizOptions">
                     ${this.currentQuiz.questions[this.currentQuestionIndex].options.map((option, index) => {
                         const letter = String.fromCharCode(65 + index);
-                        const inputId = `quizOption_${this.currentQuestionIndex}_${index}`;
                         return `
-                            <label class="quiz-option" data-index="${index}" data-question="${this.currentQuestionIndex}" for="${inputId}">
-                                <input type="radio" id="${inputId}" name="quizOption_${this.currentQuestionIndex}" value="${index}">
+                            <div class="quiz-option" data-index="${index}" data-question="${this.currentQuestionIndex}" role="button" tabindex="0">
                                 <span class="option-letter">${letter}</span>
                                 <span class="quiz-option-label">${option.text}</span>
-                            </label>
+                            </div>
                         `;
                     }).join('')}
                 </div>
