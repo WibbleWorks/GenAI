@@ -235,8 +235,10 @@ class QuizSystem {
         let correctCount = 0;
         let weakConcepts = [...new Set(this.weakConcepts)]; // Deduplicate
         
+        // Only check answers up to the number of questions
+        const numQuestions = this.currentQuiz.questions.length;
         this.userAnswers.forEach((answerIndex, questionIndex) => {
-            if (answerIndex !== null) {
+            if (answerIndex !== null && questionIndex < numQuestions) {
                 const question = this.currentQuiz.questions[questionIndex];
                 const option = question.options[answerIndex];
                 if (option && option.isCorrect) {
@@ -247,7 +249,7 @@ class QuizSystem {
             }
         });
         
-        const finalScore = Math.round((correctCount / this.currentQuiz.questions.length) * 100);
+        const finalScore = Math.round((correctCount / numQuestions) * 100);
         
         // Prepare results
         const totalQuestions = this.currentQuiz.questions.length;
