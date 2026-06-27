@@ -129,11 +129,21 @@ class QuizSystem {
         question.options.forEach((option, index) => {
             const letter = String.fromCharCode(65 + index);
             const isSelected = this.userAnswers[currentQIndex] === index;
+            const isAnswered = this.userAnswers[currentQIndex] !== null;
             
             let classes = 'quiz-option';
-            if (this.userAnswers[currentQIndex] !== null) {
-                if (option.isCorrect) classes += ' correct';
-                else if (this.userAnswers[currentQIndex] === index) classes += ' incorrect';
+            if (isAnswered) {
+                if (isSelected) {
+                    classes += ' selected';
+                    if (option.isCorrect) {
+                        classes += ' correct';
+                    } else {
+                        classes += ' incorrect';
+                    }
+                } else if (option.isCorrect) {
+                    // This is the correct answer but not selected
+                    classes += ' correct-unselected';
+                }
             } else if (isSelected) {
                 classes += ' selected';
             }
@@ -155,17 +165,21 @@ class QuizSystem {
         
         newOptions.forEach(option => {
             option.addEventListener('click', function(e) {
-                if (quizSystem.userAnswers[quizSystem.currentQuestionIndex] !== null) return;
+                if (quizSystem.userAnswers[currentQIndex] !== null) return;
                 
                 const index = parseInt(this.dataset.index);
-                quizSystem.userAnswers[quizSystem.currentQuestionIndex] = index;
+                quizSystem.userAnswers[currentQIndex] = index;
                 
-                // Update UI
-                newOptions.forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected');
+                // Update UI - select the clicked option
+                const optionsContainer = document.getElementById('quizOptions');
+                if (optionsContainer) {
+                    const allOptions = optionsContainer.querySelectorAll('.quiz-option');
+                    allOptions.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
                 
                 // Track weak concept if incorrect
-                const question = quizSystem.currentQuiz.questions[quizSystem.currentQuestionIndex];
+                const question = quizSystem.currentQuiz.questions[currentQIndex];
                 if (!question.options[index].isCorrect) {
                     if (question.concept && !quizSystem.weakConcepts.includes(question.concept)) {
                         quizSystem.weakConcepts.push(question.concept);
