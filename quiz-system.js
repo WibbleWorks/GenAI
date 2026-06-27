@@ -49,13 +49,13 @@ class QuizSystem {
         this.updateTimer();
         this.timer = setInterval(() => this.updateTimer(), 1000);
         
-        // Display first question
-        this.displayQuestion();
-        
         // Show quiz in panel
         if (this.quizContainer) {
             this.quizContainer.innerHTML = this.getQuizHTML();
             this.quizContainer.classList.add('show');
+            
+            // Now display the first question with proper event listeners
+            this.displayQuestion();
         }
         
         console.log(`Started quiz: ${quiz.title}`);
