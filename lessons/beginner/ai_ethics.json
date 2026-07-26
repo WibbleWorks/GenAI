@@ -1,0 +1,171 @@
+{
+  "id": "ai_ethics",
+  "title": "Responsible AI & Ethics",
+  "subtitle": "Bias, Fairness, Safety, and Accountability",
+  "level": "beginner",
+  "number": 4,
+  "estimatedTime": 60,
+  "difficulty": 2,
+  "prerequisites": [
+    "ai_introduction",
+    "ml_introduction"
+  ],
+  "content": "\n                        <div class=\"lesson-section\">\n                            <h3>⚖️ Why Responsible AI Matters</h3>\n                            <p>AI systems are deployed in high-stakes domains - hiring, lending, healthcare, criminal justice, education. Errors and biases at scale cause real harm. Building capable AI without building responsible AI is a reputational, legal, and ethical liability.</p>\n                            <p><strong>This is not optional.</strong> Regulations like the EU AI Act, NIST AI Risk Management Framework, and sector-specific laws increasingly require documented, auditable AI practices.</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🎯 Bias and Fairness</h3>\n                            <p><strong>Where bias enters:</strong> Training data (historical bias, sampling bias), label bias, model bias, deployment bias.</p>\n                            <p><strong>Fairness definitions</strong> (no single \"fair\" - they conflict):</p>\n                            <ul>\n                                <li><strong>Demographic parity:</strong> Outcomes independent of protected attribute</li>\n                                <li><strong>Equal opportunity:</strong> Equal true-positive rates across groups</li>\n                                <li><strong>Equalized odds:</strong> Equal true-positive and false-positive rates</li>\n                            </ul>\n                            <p><strong>Mitigation:</strong> Audit datasets for representation; reweight samples; use fairness constraints; test on slices, not just averages.</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🛡️ Safety and Alignment</h3>\n                            <p><strong>Alignment</strong> = ensuring model behavior matches human intent and values.</p>\n                            <ul>\n                                <li><strong>Hallucinations:</strong> LLMs confidently produce false statements. Verify outputs; never trust without checking.</li>\n                                <li><strong>Prompt injection:</strong> Untrusted text can override instructions. Treat all external input as untrusted.</li>\n                                <li><strong>Jailbreaks:</strong> Attempts to bypass safety training. Layered defenses, never a single control.</li>\n                                <li><strong>Goal misgeneralization:</strong> Models pursue proxy goals that look right in training but wrong in deployment.</li>\n                            </ul>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>📊 Evaluation Beyond Accuracy</h3>\n                            <p>Accuracy alone is misleading. Evaluate on:</p>\n                            <ul>\n                                <li><strong>Slice performance:</strong> Per-group metrics, not just averages</li>\n                                <li><strong>Robustness:</strong> Distribution shift, adversarial inputs</li>\n                                <li><strong>Calibration:</strong> Are confidence scores trustworthy?</li>\n                                <li><strong>Human eval:</strong> For LLMs, use human raters and rubrics</li>\n                                <li><strong>Toxicity / harm:</strong> Automated + manual review</li>\n                            </ul>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🔐 Privacy and Data</h3>\n                            <ul>\n                                <li><strong>PII:</strong> Don't train on personal data without a lawful basis.</li>\n                                <li><strong>Memorization:</strong> LLMs can regurgitate training data. Use differential privacy or scrub-and-audit.</li>\n                                <li><strong>Data provenance:</strong> Document where data came from and what consent was given.</li>\n                            </ul>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>📋 Accountability and Transparency</h3>\n                            <ul>\n                                <li><strong>Model cards:</strong> Document intended use, performance, limitations.</li>\n                                <li><strong>Datasheets:</strong> Document dataset collection, composition, uses.</li>\n                                <li><strong>Human-in-the-loop:</strong> For high-stakes decisions, keep a human accountable.</li>\n                                <li><strong>Right to explanation:</strong> Provide reasons for automated decisions where required.</li>\n                            </ul>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>✅ Practical Checklist</h3>\n                            <ul>\n                                <li>Define intended use and out-of-scope uses explicitly</li>\n                                <li>Audit training data for representation and consent</li>\n                                <li>Measure performance on slices, not just the aggregate</li>\n                                <li>Test for hallucination, prompt injection, and jailbreaks before launch</li>\n                                <li>Publish a model card; maintain an incident response plan</li>\n                                <li>Monitor in production; have a kill switch</li>\n                            </ul>\n                        </div>\n                    ",
+  "concepts": [
+    "AI Ethics",
+    "Bias",
+    "Fairness",
+    "Safety",
+    "Alignment",
+    "Hallucinations",
+    "Privacy",
+    "Accountability"
+  ],
+  "quiz": {
+    "id": "ai_ethics_quiz",
+    "title": "Responsible AI Quiz",
+    "passingScore": 60,
+    "timeLimit": 540,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "A model has 95% overall accuracy but 60% accuracy for one demographic group. What is the right conclusion?",
+        "options": [
+          {
+            "text": "The model is biased and needs investigation - aggregate accuracy hides slice-level failures",
+            "isCorrect": true
+          },
+          {
+            "text": "95% is high enough to deploy",
+            "isCorrect": false
+          },
+          {
+            "text": "Bias only matters if the model is intentional",
+            "isCorrect": false
+          },
+          {
+            "text": "Add more data of any kind and the problem will resolve",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Aggregate metrics can mask serious per-group failures. Always evaluate on slices; high overall accuracy is not a substitute for fairness analysis.",
+        "difficulty": 2,
+        "concept": "Bias"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "An LLM confidently states a fake citation. What is this called and what should you do?",
+        "options": [
+          {
+            "text": "Hallucination - verify outputs before relying on them",
+            "isCorrect": true
+          },
+          {
+            "text": "A bug - report it and the model will be retrained",
+            "isCorrect": false
+          },
+          {
+            "text": "Prompt injection - ignore it",
+            "isCorrect": false
+          },
+          {
+            "text": "Overfitting - reduce the learning rate",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "LLMs can hallucinate plausible but false content. Always verify factual claims, especially citations and numbers, before using them.",
+        "difficulty": 1,
+        "concept": "Hallucinations"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "A retrieved document tries to override your system instructions, instructing the model to ignore prior rules. What is this and how do you defend?",
+        "options": [
+          {
+            "text": "Prompt injection; treat retrieved content as untrusted input, keep system instructions privileged, and validate outputs against a schema",
+            "isCorrect": true
+          },
+          {
+            "text": "A hallucination; lower the temperature",
+            "isCorrect": false
+          },
+          {
+            "text": "Overfitting; train more",
+            "isCorrect": false
+          },
+          {
+            "text": "A normal feature; nothing needs to be done",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Prompt injection is untrusted text trying to override instructions. Defense: treat retrieved/document content as data, mark it as untrusted, reinforce privileged instructions, and validate outputs.",
+        "difficulty": 2,
+        "concept": "Safety"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Two fairness criteria conflict - you can't satisfy demographic parity and equal opportunity at the same time. What's the right move?",
+        "options": [
+          {
+            "text": "Document the trade-off explicitly and pick the criterion appropriate for the use case; fairness is plural, not single-criterion",
+            "isCorrect": true
+          },
+          {
+            "text": "Always pick demographic parity; it's the only definition that matters",
+            "isCorrect": false
+          },
+          {
+            "text": "Always pick equal opportunity; it's the only definition that matters",
+            "isCorrect": false
+          },
+          {
+            "text": "Ignore fairness criteria entirely",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Multiple fairness criteria are known to be mutually unsatisfiable in many settings. Choosing one is a values decision the team must make explicitly and document.",
+        "difficulty": 3,
+        "concept": "Fairness"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Which is the best doc + accountability practice when shipping an ML model?",
+        "options": [
+          {
+            "text": "Publish a model card (intended use, performance, limitations) and a human-in-the-loop plan for high-stakes decisions",
+            "isCorrect": true
+          },
+          {
+            "text": "Ship it; docs are optional",
+            "isCorrect": false
+          },
+          {
+            "text": "Only ship after accuracy reaches exactly 100% (unrealistic)",
+            "isCorrect": false
+          },
+          {
+            "text": "Skip docs and rely on internal notes",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Model cards and human-in-the-loop plans make intended use, limitations, and accountability explicit - increasingly required by regulation and good AI hygiene generally.",
+        "difficulty": 2,
+        "concept": "Accountability"
+      }
+    ]
+  },
+  "animation": {
+    "type": "bias-dashboard",
+    "title": "Bias Dashboard",
+    "description": "Visualize per-slice metrics. Slices with low accuracy light up red.",
+    "controls": [
+      "generateBiasData",
+      "adjustBiasThresholds"
+    ]
+  }
+}

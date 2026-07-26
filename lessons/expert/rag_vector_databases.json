@@ -1,0 +1,170 @@
+{
+  "id": "rag_vector_databases",
+  "title": "RAG & Vector Databases",
+  "subtitle": "Grounding LLMs in Your Own Data",
+  "level": "expert",
+  "number": 13,
+  "estimatedTime": 75,
+  "difficulty": 4,
+  "prerequisites": [
+    "prompt_engineering"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Explain why RAG reduces hallucinations vs. fine-tuning</li>\n                    <li>Choose a chunking strategy for a given document type</li>\n                    <li>Pick between local (Chroma, FAISS) and hosted (pgvector, Pinecone) vector stores</li>\n                    <li>Prompts + retrieval + reranking + citation, end-to-end</li>\n                    <li>Evaluate a RAG system on faithfulness and answer relevance</li>\n                </ul>\n                <p><strong>Before you start:</strong> Complete Lesson 9 (Prompt Engineering). You should understand system/user message roles and structured output.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🤔 Why RAG?</h3>\n                <p>An LLM only knows what it was trained on, and that stops at a training cutoff. Three options to give it current or private knowledge:</p>\n                <table style=\"width: 100%; border-collapse: collapse;\">\n                    <thead><tr style=\"border-bottom: 2px solid var(--border-color);\"><th style=\"text-align:left; padding:0.5rem;\">Approach</th><th style=\"text-align:left; padding:0.5rem;\">When to use</th><th style=\"text-align:left; padding:0.5rem;\">Cost / freshness</th></tr></thead>\n                    <tbody>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td style=\"padding:0.5rem;\">Prompt Engineering</td><td style=\"padding:0.5rem;\">Small, fits-in-context docs</td><td style=\"padding:0.5rem;\">Cheap; stale the moment docs change</td></tr>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td style=\"padding:0.5rem;\">RAG</td><td style=\"padding:0.5rem;\">Large or frequently-updated docs</td><td style=\"padding:0.5rem;\">Medium; fresh as you re-index</td></tr>\n                        <tr><td style=\"padding:0.5rem;\">Fine-tuning</td><td style=\"padding:0.5rem;\">Tone, format, domain style</td><td style=\"padding:0.5rem;\">Expensive; re-train on change</td></tr>\n                    </tbody>\n                </table>\n                <p><strong>Key insight:</strong> fine-tuning teaches behavior; RAG provides knowledge. They are not rivals - many production systems use both. But when in doubt, start with RAG: it's cheaper, easier to debug (you can see what was retrieved), and refreshes by re-indexing.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔢 Embeddings & Vector Spaces (recap)</h3>\n                <p>An <strong>embedding</strong> maps text to a vector in a high-dimensional space (typically 384, 768, 1024, 1536 dims). Semantically similar texts land near each other. Retrieval = nearest-neighbor search in that space.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-39\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Embeddings & cosine similarity</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-39')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-39')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom langchain_openai import OpenAIEmbeddings\nfrom langchain_community.vectorstores import Chroma\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\n# Last verified: 2025-07\nemb = OpenAIEmbeddings(model=\"text-embedding-3-small\")  # 1536-dim\n\n# Quick sanity check: similar sentences have high cosine similarity\nimport numpy as np\nv1 = np.array(emb.embed_query(\"How do I reset my password?\"))\nv2 = np.array(emb.embed_query(\"I forgot my login credentials\"))\nv3 = np.array(emb.embed_query(\"What's the weather today?\"))\ncos = lambda a, b: a @ b / (np.linalg.norm(a) * np.linalg.norm(b))\nprint(cos(v1, v2))  # ~0.75 - high (same intent)\nprint(cos(v1, v3))  # ~0.30 - low  (different topic)\n            </code></pre>\n                <div id=\"cb-39\" class=\"code-source\" style=\"display:none;\">\nfrom langchain_openai import OpenAIEmbeddings\nfrom langchain_community.vectorstores import Chroma\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\n# Last verified: 2025-07\nemb = OpenAIEmbeddings(model=\"text-embedding-3-small\")  # 1536-dim\n\n# Quick sanity check: similar sentences have high cosine similarity\nimport numpy as np\nv1 = np.array(emb.embed_query(\"How do I reset my password?\"))\nv2 = np.array(emb.embed_query(\"I forgot my login credentials\"))\nv3 = np.array(emb.embed_query(\"What's the weather today?\"))\ncos = lambda a, b: a @ b / (np.linalg.norm(a) * np.linalg.norm(b))\nprint(cos(v1, v2))  # ~0.75 - high (same intent)\nprint(cos(v1, v3))  # ~0.30 - low  (different topic)\n            </div>\n            </div>\n        \n                <p><strong>Don't over-think the model:</strong> for most use cases, the default <code>text-embedding-3-small</code> or an open model like <code>bge-small-en</code> is fine. Switch to a larger embed model only when retrieval quality is the bottleneck.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🪓 Chunking</h3>\n                <p>The most overlooked lever. Bad chunking kills RAG even with a great model. Guidelines:</p>\n                <ul>\n                    <li><strong>Size:</strong> 300-800 tokens is a common default. Too small loses context; too big dilutes relevance.</li>\n                    <li><strong>Boundaries:</strong> split on natural boundaries (paragraphs, markdown headers, code blocks) before size. <code>RecursiveCharacterTextSplitter</code> does this by default.</li>\n                    <li><strong>Overlap:</strong> 50-100 tokens of overlap between chunks to avoid cutting ideas in half.</li>\n                    <li><strong>Metadata:</strong> attach source, page, section to each chunk - you'll need it for citations.</li>\n                </ul>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-40\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Recursive chunking</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-40')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-40')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\nsplitter = RecursiveCharacterTextSplitter(\n    chunk_size=500,\n    chunk_overlap=80,\n    separators=[\"\\n\\n\", \"\\n\", \". \", \" \", \"\"],  # try paragraphs first, then lines, then sentences\n)\n\n# Each chunk keeps its source metadata for citation\ndocs = splitter.split_text(long_text)\nprint(f\"Split into {len(docs)} chunks, avg {sum(len(c) for c in docs)//len(docs)} chars\")\n            </code></pre>\n                <div id=\"cb-40\" class=\"code-source\" style=\"display:none;\">\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\nsplitter = RecursiveCharacterTextSplitter(\n    chunk_size=500,\n    chunk_overlap=80,\n    separators=[\"\\n\\n\", \"\\n\", \". \", \" \", \"\"],  # try paragraphs first, then lines, then sentences\n)\n\n# Each chunk keeps its source metadata for citation\ndocs = splitter.split_text(long_text)\nprint(f\"Split into {len(docs)} chunks, avg {sum(len(c) for c in docs)//len(docs)} chars\")\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🗃️ Vector Databases</h3>\n                <p>Options, in roughly increasing effort:</p>\n                <ul>\n                    <li><strong>FAISS</strong> - in-process library, great for prototypes and small corpora (<code>pip install \"faiss-cpu&gt;=1.8\"</code>).</li>\n                    <li><strong>Chroma</strong> - local-first, embedded, no server needed (<code>pip install \"chromadb&gt;=0.5\"</code>).</li>\n                    <li><strong>pgvector</strong> - PostgreSQL extension; reuse your existing DB and ops. Often the right answer in production.</li>\n                    <li><strong>Pinecone / Weaviate / Qdrant</strong> - hosted / dedicated, with managed scaling and filters.</li>\n                </ul>\n                <p><strong>Default choice:</strong> start with Chroma or FAISS for the prototype; move to pgvector when you already run Postgres, or a managed store when you outgrow self-hosting.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔁 End-to-End RAG</h3>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-41\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Minimal RAG pipeline (LangChain >=0.3)</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-41')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-41')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# pip install \"langchain&gt;=0.3\" langchain-community chromadb openai\nfrom langchain_openai import ChatOpenAI, OpenAIEmbeddings\nfrom langchain_community.vectorstores import Chroma\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.runnables import RunnablePassthrough\nfrom langchain_core.output_parsers import StrOutputParser\n\nraw_docs = [...]  # list of strings or LangChain Documents\n\n# 1. Chunk\nsplitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=80)\nchunks = splitter.split_documents(raw_docs)\n\n# 2. Embed + index\nvectorstore = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(model=\"text-embedding-3-small\"))\nretriever = vectorstore.as_retriever(search_type=\"mmr\", search_kwargs={\"k\": 4})  # MMR for diversity\n\n# 3. Generate with retrieved context, with a citation instruction\nprompt = ChatPromptTemplate.from_messages([\n    (\"system\",\n     \"Answer the user's question using ONLY the context below. \"\n     \"If the answer is not in the context, say \\\"I don't know based on the provided context.\\\" \"\n     \"Cite sources as [source] at the end of each claim.\"),\n    (\"human\",\n     \"Context:\\n{context}\\n\\nQuestion: {question}\")\n])\n\nllm = ChatOpenAI(model=\"gpt-4o-mini\", temperature=0)\n\ndef format_docs(docs):\n    return \"\\n\\n\".join(f\"[{d.metadata.get('source','?')}] {d.page_content}\" for d in docs)\n\nrag_chain = (\n    {\"context\": retriever | format_docs, \"question\": RunnablePassthrough()}\n    | prompt | llm | StrOutputParser()\n)\n\nanswer = rag_chain.invoke(\"What is our refund policy for annual plans?\")\nprint(answer)\n            </code></pre>\n                <div id=\"cb-41\" class=\"code-source\" style=\"display:none;\">\n# pip install \"langchain&gt;=0.3\" langchain-community chromadb openai\nfrom langchain_openai import ChatOpenAI, OpenAIEmbeddings\nfrom langchain_community.vectorstores import Chroma\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.runnables import RunnablePassthrough\nfrom langchain_core.output_parsers import StrOutputParser\n\nraw_docs = [...]  # list of strings or LangChain Documents\n\n# 1. Chunk\nsplitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=80)\nchunks = splitter.split_documents(raw_docs)\n\n# 2. Embed + index\nvectorstore = Chroma.from_documents(chunks, embedding=OpenAIEmbeddings(model=\"text-embedding-3-small\"))\nretriever = vectorstore.as_retriever(search_type=\"mmr\", search_kwargs={\"k\": 4})  # MMR for diversity\n\n# 3. Generate with retrieved context, with a citation instruction\nprompt = ChatPromptTemplate.from_messages([\n    (\"system\",\n     \"Answer the user's question using ONLY the context below. \"\n     \"If the answer is not in the context, say \\\"I don't know based on the provided context.\\\" \"\n     \"Cite sources as [source] at the end of each claim.\"),\n    (\"human\",\n     \"Context:\\n{context}\\n\\nQuestion: {question}\")\n])\n\nllm = ChatOpenAI(model=\"gpt-4o-mini\", temperature=0)\n\ndef format_docs(docs):\n    return \"\\n\\n\".join(f\"[{d.metadata.get('source','?')}] {d.page_content}\" for d in docs)\n\nrag_chain = (\n    {\"context\": retriever | format_docs, \"question\": RunnablePassthrough()}\n    | prompt | llm | StrOutputParser()\n)\n\nanswer = rag_chain.invoke(\"What is our refund policy for annual plans?\")\nprint(answer)\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔍 Beyond Naive Retrieval</h3>\n                <ul>\n                    <li><strong>MMR (Maximal Marginal Relevance):</strong> retrieve diverse chunks, not all the same. Set via <code>search_type=\"mmr\"</code>.</li>\n                    <li><strong>Reranking:</strong> retrieve ~20 candidate chunks with a bi-encoder, then re-score top-k with a cross-encoder (e.g., <code>bge-reranker-base</code>). Big quality lift for little cost.</li>\n                    <li><strong>Hybrid search:</strong> combine keyword (BM25) and vector search. Useful when exact terms (product codes, names) matter.</li>\n                    <li><strong>Query rewriting / HyDE:</strong> rewrite the user's question (or expand it) before retrieval. Helps with vague queries.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📏 RAG Evaluation</h3>\n                <p>Two failure modes to measure separately:</p>\n                <ul>\n                    <li><strong>Retrieval quality:</strong> did the retriever fetch the right chunks? (Precision@k, Recall@k, MRR.)</li>\n                    <li><strong>Generation quality:</strong> did the model use those chunks faithfully?\n                        <ul>\n                            <li><strong>Faithfulness</strong> (no hallucinations beyond context)</li>\n                            <li><strong>Answer relevance</strong> (did it address the question?)</li>\n                            <li><strong>Context relevance</strong> (was the retrieved context actually useful?)</li>\n                        </ul>\n                    </li>\n                </ul>\n                <p>Use a framework like <strong>Ragas</strong> or <strong>TruLens</strong> to compute these on a labeled eval set - see Lesson 12 (LLM Evaluation) for more.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>☁️ Run on SageMaker</h3>\n                \n            <div class=\"cloud-guide\" style=\"margin: 1.5rem 0; padding: 1.25rem; background: var(--surface-light); border-radius: 8px; border-left: 4px solid var(--ai-blue);\">\n                <h4 style=\"margin-bottom: 0.5rem;\">☁️ Amazon SageMaker</h4>\n                <p style=\"color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;\">AWS machine learning platform</p>\n                \n                <h4>Amazon SageMaker Setup</h4>\n                <p><strong>Installation:</strong></p>\n                <pre>pip install \"sagemaker>=2.220\"</pre>\n                <p><strong>Configuration:</strong></p>\n                <pre>import sagemaker\nsagemaker.Session()</pre>\n                <p><strong>Features:</strong></p>\n                <ul>\n                    <li>Managed Jupyter notebooks</li>\n                    <li>Built-in ML algorithms</li>\n                    <li>Automated model training</li>\n                    <li>Scalable deployment</li>\n                </ul>\n            \n                <details style=\"margin-top: 0.75rem;\">\n                    <summary style=\"cursor: pointer; color: var(--ai-blue); font-size: 0.875rem;\">Show example code</summary>\n                    <div style=\"margin-top: 0.5rem;\">\n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-7\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>SageMaker Training</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-7')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-7')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nimport sagemaker\nfrom sagemaker import get_execution_role\n\n# Initialize\nsagemaker_session = sagemaker.Session()\nrole = get_execution_role()\n\n# Create estimator\nfrom sagemaker.sklearn.estimator import SKLearn\nestimator = SKLearn(\n    entry_script='train.py',\n    role=role,\n    instance_count=1,\n    instance_type='ml.m5.large'\n)\n\n# Train\nestimator.fit({'train': 's3://bucket/train', 'test': 's3://bucket/test'})\n            </code></pre>\n                <div id=\"cb-7\" class=\"code-source\" style=\"display:none;\">\nimport sagemaker\nfrom sagemaker import get_execution_role\n\n# Initialize\nsagemaker_session = sagemaker.Session()\nrole = get_execution_role()\n\n# Create estimator\nfrom sagemaker.sklearn.estimator import SKLearn\nestimator = SKLearn(\n    entry_script='train.py',\n    role=role,\n    instance_count=1,\n    instance_type='ml.m5.large'\n)\n\n# Train\nestimator.fit({'train': 's3://bucket/train', 'test': 's3://bucket/test'})\n            </div>\n            </div>\n        </div>\n                </details>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💻 Try It Yourself</h3>\n                <div class=\"interactive-lab-mount\" data-mount=\"lab\"></div>\n            </div>\n        ",
+  "concepts": [
+    "RAG",
+    "Embeddings",
+    "Chunking",
+    "Vector databases",
+    "Retrieval",
+    "Reranking",
+    "Citation",
+    "RAG evaluation"
+  ],
+  "quiz": {
+    "id": "rag_vector_databases_quiz",
+    "title": "RAG & Vector Databases Quiz",
+    "passingScore": 60,
+    "timeLimit": 540,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "When does RAG beat fine-tuning for adding new knowledge?",
+        "options": [
+          {
+            "text": "When the knowledge changes often or is private - RAG refreshes by re-indexing, no retraining needed",
+            "isCorrect": true
+          },
+          {
+            "text": "When you want to change the model's tone",
+            "isCorrect": false
+          },
+          {
+            "text": "When the corpus is one short paragraph",
+            "isCorrect": false
+          },
+          {
+            "text": "Never - fine-tuning is always better",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "RAG provides knowledge and refreshes by re-indexing. Fine-tuning teaches behavior/style. For frequently changing or private data, RAG is cheaper and easier to audit.",
+        "difficulty": 2,
+        "concept": "RAG"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "What is the purpose of the overlap in chunking?",
+        "options": [
+          {
+            "text": "To avoid cutting ideas in half at chunk boundaries",
+            "isCorrect": true
+          },
+          {
+            "text": "To reduce the total number of chunks",
+            "isCorrect": false
+          },
+          {
+            "text": "To make embeddings smaller",
+            "isCorrect": false
+          },
+          {
+            "text": "To improve cosine similarity mathematically",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "A small overlap (50-100 tokens) guards against severing a sentence or argument at a chunk boundary, which would lose context for retrieval.",
+        "difficulty": 1,
+        "concept": "Chunking"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "You retrieve 20 candidate chunks and re-score the top 5 with a cross-encoder. What is this called?",
+        "options": [
+          {
+            "text": "Reranking",
+            "isCorrect": true
+          },
+          {
+            "text": "Hybrid search",
+            "isCorrect": false
+          },
+          {
+            "text": "HyDE",
+            "isCorrect": false
+          },
+          {
+            "text": "Re-embedding",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Retrieve many with a fast bi-encoder, then re-score the top-k with a cross-encoder. This is reranking and typically gives a large quality lift for little latency.",
+        "difficulty": 2,
+        "concept": "Reranking"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "A RAG system cites a 'fact' that is NOT in any retrieved chunk. Which metric catches this?",
+        "options": [
+          {
+            "text": "Faithfulness (no hallucinations beyond the retrieved context)",
+            "isCorrect": true
+          },
+          {
+            "text": "Recall@k (retrieval coverage)",
+            "isCorrect": false
+          },
+          {
+            "text": "Latency",
+            "isCorrect": false
+          },
+          {
+            "text": "Throughput",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Faithfulness measures whether the generated answer is supported by the retrieved context. A citation outside the context fails faithfulness.",
+        "difficulty": 2,
+        "concept": "RAG evaluation"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Default vector store choice for a prototype on a laptop?",
+        "options": [
+          {
+            "text": "Chroma or FAISS - embedded, no server needed",
+            "isCorrect": true
+          },
+          {
+            "text": "Pinecone - needs an account but is fine for prototypes",
+            "isCorrect": false
+          },
+          {
+            "text": "Postgres with pgvector - only if you already run Postgres",
+            "isCorrect": false
+          },
+          {
+            "text": "A spreadsheet",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Chroma and FAISS are embedded libraries - no server, no account, perfect for prototypes. pgvector / Pinecone become attractive at production scale.",
+        "difficulty": 1,
+        "concept": "Vector databases"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "RAG Pipeline Walkthrough",
+    "description": "Walk through the RAG pipeline: chunk -> embed -> retrieve -> rerank -> generate.",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  }
+}

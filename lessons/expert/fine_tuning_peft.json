@@ -1,0 +1,171 @@
+{
+  "id": "fine_tuning_peft",
+  "title": "Fine-tuning & PEFT",
+  "subtitle": "Customizing Models with LoRA & QLoRA",
+  "level": "expert",
+  "number": 14,
+  "estimatedTime": 75,
+  "difficulty": 4,
+  "prerequisites": [
+    "practical_transformers",
+    "practical_tensorflow"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Decide between prompting, RAG, and fine-tuning for a given problem</li>\n                    <li>Explain why full fine-tuning is often wasteful</li>\n                    <li>Use LoRA and QLoRA to fine-tune on a single GPU</li>\n                    <li>Prepare a dataset for fine-tuning</li>\n                    <li>Avoid and detect catastrophic forgetting</li>\n                </ul>\n                <p><strong>Before you start:</strong> Complete Lesson 6 (TensorFlow) and Lesson 7 (Transformers). You should understand what a transformer is and how training loops work.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🤔 When to Fine-tune (and when not to)</h3>\n                <p>Three escalating options, in order of cost:</p>\n                <ol>\n                    <li><strong>Prompting</strong> - cheapest, no training. Try this first.</li>\n                    <li><strong>RAG</strong> - medium cost, adds knowledge. Use when the model needs current or private data (Lesson 10).</li>\n                    <li><strong>Fine-tuning</strong> - expensive, changes the model. Use when prompting cannot reliably achieve the desired behavior, e.g. a specific output style, a niche domain, or a format that resists few-shot.</li>\n                </ol>\n                <p><strong>Fine-tuning is for behavior, not knowledge.</strong> If your problem is \"the model doesn't know X\", that's RAG. If your problem is \"the model writes in style Y\" or \"the model refuses format Z despite prompts\", that's fine-tuning.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💪 Full Fine-tuning vs. Parameter-Efficient</h3>\n                <p>Full fine-tuning updates every weight of the model. For a 7B-parameter model that's 7B weights of optimizer state in fp32 - roughly 28 GB just for Adam state, plus gradients, plus activations. It doesn't fit on a single consumer GPU.</p>\n                <p><strong>Parameter-Efficient Fine-Tuning (PEFT)</strong> freezes the base model and trains a tiny set of adapter weights. Storage and memory drop by orders of magnitude, and the base model can be shared across many adapters.</p>\n                <table style=\"width: 100%; border-collapse: collapse;\">\n                    <thead><tr style=\"border-bottom: 2px solid var(--border-color);\"><th>Method</th><th>Trainable params</th><th>Single-GPU?</th><th>Quality (typical)</th></tr></thead>\n                    <tbody>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td>Full fine-tuning</td><td>100%</td><td>No (7B+)</td><td>Best</td></tr>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td>LoRA</td><td>~0.1-1%</td><td>Yes</td><td>~95-99% of full</td></tr>\n                        <tr><td>QLoRA</td><td>~0.1-1% (+ 4-bit base)</td><td>Yes (single 24GB)</td><td>~95-99% of full</td></tr>\n                    </tbody>\n                </table>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🧠 LoRA in One Paragraph</h3>\n                <p>LoRA (Low-Rank Adaptation) replaces the weight update <code>W' = W + &#916;W</code> with a low-rank factorization: <code>W' = W + B @ A</code> where <code>A</code> is rank <code>r</code> and <code>B</code> is <code>d &#215; r</code>. Only <code>A</code> and <code>B</code> are trained; <code>W</code> stays frozen. The adapter is tiny (often &lt;1% of the model size) and can be hot-swapped at inference time.</p>\n                <p><strong>Rank <code>r</code>:</strong> start with 8 or 16 for most tasks; 64 if the task is far from the base model's training.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔬 QLoRA for Memory Efficiency</h3>\n                <p>QLoRA keeps the frozen base model in <strong>4-bit</strong> (NF4 quantization) and only the LoRA adapters in fp16/bf16. The result: you can fine-tune a 7B model on a single 24 GB GPU that would otherwise need 80 GB+. The HuggingFace <code>bitsandbytes</code> integration makes this almost a one-liner.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🚀 Fine-tuning with PEFT (HuggingFace)</h3>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-42\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>QLoRA fine-tuning with PEFT + TRL</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-42')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-42')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# pip install \"transformers&gt;=4.44\" \"peft&gt;=0.12\" \"trl&gt;=0.9\" \"bitsandbytes&gt;=0.43\" \"datasets&gt;=2.20\" \"accelerate&gt;=0.34\"\n# Last verified: 2025-07\nfrom datasets import load_dataset\nfrom transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, BitsAndBytesConfig\nfrom peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training\nfrom trl import SFTTrainer\n\n# 1. Load a small base model in 4-bit (QLoRA)\nbnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type=\"nf4\", bnb_4bit_compute_dtype=\"bfloat16\")\nmodel_id = \"meta-llama/Meta-Llama-3-8B\"\ntok = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb, device_map=\"auto\")\nmodel = prepare_model_for_kbit_training(model)\n\n# 2. Attach LoRA adapters (rank 8, alpha 16)\npeft_config = LoraConfig(\n    r=8, lora_alpha=16, lora_dropout=0.05,\n    target_modules=[\"q_proj\",\"k_proj\",\"v_proj\",\"o_proj\"],  # attention projections\n    task_type=\"CAUSAL_LM\",\n)\nmodel = get_peft_model(model, peft_config)\nmodel.print_trainable_parameters()  # ~0.5% trainable\n\n# 3. Prepare the dataset (instruction-tuning format)\nds = load_dataset(\" cnn_dailymail\", \"3.0.0\", split=\"train[:1%]\")\ndef fmt(ex): return {\"text\": f\"Summarize: {ex['article']}\\nSummary: {ex['highlights']}\"}\nds = ds.map(fmt, remove_columns=ds.column_names)\n\n# 4. Train\nargs = TrainingArguments(\n    output_dir=\"./qlora-out\", per_device_train_batch_size=2, gradient_accumulation_steps=4,\n    learning_rate=2e-4, num_train_epochs=1, logging_steps=10, save_steps=200, bf16=True,\n)\ntrainer = SFTTrainer(model=model, train_dataset=ds, args=args, peft_config=peft_config, tokenizer=tok)\ntrainer.train()\n\n# 5. Save just the adapter (~10s of MB) and reload + merge at inference\ntrainer.save_model(\"./qlora-adapter\")\n            </code></pre>\n                <div id=\"cb-42\" class=\"code-source\" style=\"display:none;\">\n# pip install \"transformers&gt;=4.44\" \"peft&gt;=0.12\" \"trl&gt;=0.9\" \"bitsandbytes&gt;=0.43\" \"datasets&gt;=2.20\" \"accelerate&gt;=0.34\"\n# Last verified: 2025-07\nfrom datasets import load_dataset\nfrom transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, BitsAndBytesConfig\nfrom peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training\nfrom trl import SFTTrainer\n\n# 1. Load a small base model in 4-bit (QLoRA)\nbnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type=\"nf4\", bnb_4bit_compute_dtype=\"bfloat16\")\nmodel_id = \"meta-llama/Meta-Llama-3-8B\"\ntok = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModelForCausalLM.from_pretrained(model_id, quantization_config=bnb, device_map=\"auto\")\nmodel = prepare_model_for_kbit_training(model)\n\n# 2. Attach LoRA adapters (rank 8, alpha 16)\npeft_config = LoraConfig(\n    r=8, lora_alpha=16, lora_dropout=0.05,\n    target_modules=[\"q_proj\",\"k_proj\",\"v_proj\",\"o_proj\"],  # attention projections\n    task_type=\"CAUSAL_LM\",\n)\nmodel = get_peft_model(model, peft_config)\nmodel.print_trainable_parameters()  # ~0.5% trainable\n\n# 3. Prepare the dataset (instruction-tuning format)\nds = load_dataset(\" cnn_dailymail\", \"3.0.0\", split=\"train[:1%]\")\ndef fmt(ex): return {\"text\": f\"Summarize: {ex['article']}\\nSummary: {ex['highlights']}\"}\nds = ds.map(fmt, remove_columns=ds.column_names)\n\n# 4. Train\nargs = TrainingArguments(\n    output_dir=\"./qlora-out\", per_device_train_batch_size=2, gradient_accumulation_steps=4,\n    learning_rate=2e-4, num_train_epochs=1, logging_steps=10, save_steps=200, bf16=True,\n)\ntrainer = SFTTrainer(model=model, train_dataset=ds, args=args, peft_config=peft_config, tokenizer=tok)\ntrainer.train()\n\n# 5. Save just the adapter (~10s of MB) and reload + merge at inference\ntrainer.save_model(\"./qlora-adapter\")\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🗂️ Data Prep</h3>\n                <ul>\n                    <li><strong>Format:</strong> instruction / response pairs. For chat, use a chat template (<code>tokenizer.apply_chat_template</code>).</li>\n                    <li><strong>Quality &gt; quantity:</strong> hundreds of high-quality examples often beat thousands of noisy ones.</li>\n                    <li><strong>Splits:</strong> hold out 5-10% for eval. Use it.</li>\n                    <li><strong>Deduplicate</strong> and remove near-duplicates, which cause overfitting.</li>\n                    <li><strong>License:</strong> you are responsible for the rights to your training data.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>⚠️ Catastrophic Forgetting</h3>\n                <p>Fine-tuning shifts the model toward your task - and away from what it knew before. Symptoms: works great on your task, suddenly bad at general reasoning or other tasks.</p>\n                <ul>\n                    <li><strong>Low LR + few epochs:</strong> 1-3 epochs at 1e-5 to 2e-4. Don't over-train.</li>\n                    <li><strong>Mix in general data:</strong> blend 10-20% of a general instruction dataset to anchor the model.</li>\n                    <li><strong>PEFT helps:</strong> the base model is frozen, so forgetting is reduced by construction.</li>\n                    <li><strong>Hold-out eval on general tasks</strong> to catch regressions.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💻 Try It Yourself</h3>\n                <div class=\"interactive-lab-mount\" data-mount=\"lab\"></div>\n            </div>\n        ",
+  "concepts": [
+    "Fine-tuning",
+    "PEFT",
+    "LoRA",
+    "QLoRA",
+    "Catastrophic forgetting",
+    "Data preparation"
+  ],
+  "quiz": {
+    "id": "fine_tuning_peft_quiz",
+    "title": "Fine-tuning & PEFT Quiz",
+    "passingScore": 60,
+    "timeLimit": 540,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "Your support bot needs to stop sounding guarded and start signing every reply with the team name. Cheapest path that works?",
+        "options": [
+          {
+            "text": "Fine-tune - this is a behavior/style change",
+            "isCorrect": true
+          },
+          {
+            "text": "RAG - it's about behavior, not knowledge, but RAG is cheaper so try it first",
+            "isCorrect": false
+          },
+          {
+            "text": "Prompt and ship - no behavior change resists prompts ever",
+            "isCorrect": false
+          },
+          {
+            "text": "Train a model from scratch",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Style/format changes are exactly what fine-tuning is for. Prompting often fails to reliably hold the style across inputs. RAG adds knowledge; it doesn't teach behavior.",
+        "difficulty": 2,
+        "concept": "Fine-tuning"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Roughly what fraction of parameters does a typical LoRA adapter train?",
+        "options": [
+          {
+            "text": "0.1-1%",
+            "isCorrect": true
+          },
+          {
+            "text": "5-10%",
+            "isCorrect": false
+          },
+          {
+            "text": "25%",
+            "isCorrect": false
+          },
+          {
+            "text": "100%",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "LoRA typically trains <1% of the parameters - the low-rank A and B matrices. The base model stays frozen.",
+        "difficulty": 1,
+        "concept": "LoRA"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "What does QLoRA add on top of LoRA?",
+        "options": [
+          {
+            "text": "4-bit NF4 quantization of the frozen base model so a 7B model fits on a single 24GB GPU",
+            "isCorrect": true
+          },
+          {
+            "text": "A reranker for retrieval",
+            "isCorrect": false
+          },
+          {
+            "text": "A vector database",
+            "isCorrect": false
+          },
+          {
+            "text": "Chain-of-thought prompting",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "QLoRA = LoRA + 4-bit NF4 quantization of the base. The base fits in ~6 GB; adapters still train in fp16. Net: fine-tune 7B on one consumer GPU.",
+        "difficulty": 2,
+        "concept": "QLoRA"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "After fine-tuning, your model is great at the new task but worse at general reasoning. What happened and how do you detect it?",
+        "options": [
+          {
+            "text": "Catastrophic forgetting; hold out a general eval set and check it after each epoch",
+            "isCorrect": true
+          },
+          {
+            "text": "Overfitting on a single example; train longer to average out",
+            "isCorrect": false
+          },
+          {
+            "text": "A bug in the dataloader; switch optimizer",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing; this is expected and acceptable",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Catastrophic forgetting: the model shifted away from general abilities toward your task. Detect with a held-out general-eval set; mitigate with low LR, few epochs, mixing in general data, or PEFT.",
+        "difficulty": 2,
+        "concept": "Catastrophic forgetting"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Your fine-tuning dataset has 50,000 examples that are near-duplicates of each other. What's the risk?",
+        "options": [
+          {
+            "text": "Overfitting to the duplicates; deduplicate first",
+            "isCorrect": true
+          },
+          {
+            "text": "No risk - more data is always better",
+            "isCorrect": false
+          },
+          {
+            "text": "Lower training cost - keep them",
+            "isCorrect": false
+          },
+          {
+            "text": "Catastrophic forgetting - irrelevant to dedup",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Near-duplicates cause overfitting and inflate apparent dataset size. Deduplicate before training.",
+        "difficulty": 1,
+        "concept": "Data preparation"
+      }
+    ]
+  },
+  "animation": {
+    "type": "nn-trainer",
+    "title": "LoRA Adapter Trainer",
+    "description": "Visualize adapter training: base frozen, small LoRA matrices updating.",
+    "controls": [
+      "addNeuronLayer",
+      "changeNNActivation",
+      "updateLearningRate",
+      "trainNN"
+    ]
+  }
+}

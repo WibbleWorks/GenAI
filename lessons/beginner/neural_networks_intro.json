@@ -1,0 +1,174 @@
+{
+  "id": "neural_networks_intro",
+  "title": "Neural Networks Intro",
+  "subtitle": "Building Blocks of Deep Learning",
+  "level": "beginner",
+  "number": 3,
+  "estimatedTime": 75,
+  "difficulty": 2,
+  "prerequisites": [
+    "ml_introduction"
+  ],
+  "content": "\n                        <div class=\"lesson-section\">\n                            <h3>🧠 Biological Inspiration</h3>\n                            <p><strong>Note:</strong> ANNs are <em>loosely inspired by</em> but not modeled on biological neurons. The brain has ~86 billion neurons with complex chemistry; ANNs use much simpler mathematical units and are a useful computational tool, not a brain model.</p>\n                            <p><strong>Scale varies widely:</strong> Small demos have a few hundred parameters; modern LLMs have billions. Parameter count is not directly comparable to neuron count.</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🔧 Perceptrons</h3>\n                            <p><strong>Formula:</strong> Output = f(Σ(wᵢ·xᵢ) + b)</p>\n                            <p><strong>Components:</strong> Inputs, Weights, Weighted Sum, Activation Function, Output</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>📈 Activation Functions</h3>\n                            <table>\n                                <thead><tr><th>Function</th><th>Formula</th><th>Use</th></tr></thead>\n                                <tbody>\n                                    <tr><td>ReLU</td><td>max(0, x)</td><td>Hidden layers</td></tr>\n                                    <tr><td>Sigmoid</td><td>1/(1+e^-x)</td><td>Binary output</td></tr>\n                                    <tr><td>Softmax</td><td>e^xᵢ/Σe^xʲ</td><td>Multi-class output</td></tr>\n                                    <tr><td>Linear</td><td>x</td><td>Regression output</td></tr>\n                                </tbody>\n                            </table>\n                            <p><strong>Why Non-Linearity?</strong> Without it, deep networks = single-layer networks!</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🏗️ Network Architecture</h3>\n                            <p><strong>Input Layer:</strong> Receives data</p>\n                            <p><strong>Hidden Layers:</strong> Learn feature representations</p>\n                            <p><strong>Output Layer:</strong> Produces predictions</p>\n                            <p><strong>Standard Flow:</strong> Input → Hidden → Hidden → ... → Output</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🔄 Forward & Backward Propagation</h3>\n                            <p><strong>Forward:</strong> Calculate output from input</p>\n                            <p><strong>Backward (Backprop):</strong> Update weights based on error</p>\n                            <p><strong>Learning Rate:</strong> Controls weight update size</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>⚙️ Optimizers: from SGD to AdamW</h3>\n                            <p>Backprop computes the gradient. The <strong>optimizer</strong> decides how the weights actually move.</p>\n                            <ul>\n                                <li><strong>SGD:</strong> <code>w -= lr * grad</code>. The simplest. Slow to navigate ravines and saddle points; oscillates in narrow directions.</li>\n                                <li><strong>Momentum:</strong> keep a running average of past gradients and use it as a \"velocity\". Smooths out oscillations and speeds up consistent directions. <code>v = beta * v + grad; w -= lr * v</code>.</li>\n                                <li><strong>AdaGrad / RMSProp:</strong> scale the per-parameter learning rate by a running estimate of the gradient's magnitude. Big steps on rarely-updating params, small steps on fast-changing ones.</li>\n                                <li><strong>Adam:</strong> momentum + per-parameter adaptive scaling. The default first-choice optimizer for most modern deep learning. <code>beta1=0.9, beta2=0.999, lr=1e-3</code> is a good starting point.</li>\n                                <li><strong>AdamW:</strong> Adam with <em>decoupled weight decay</em> (not the same as L2 reg via Adam!). Default for transformer fine-tuning; better generalization than Adam in practice.</li>\n                            </ul>\n                            <p><strong>Rule of thumb:</strong> Adam (or AdamW) at lr=1e-3 first. If training is unstable or noisy, dial lr down to 3e-4 or 5e-4. For LLM fine-tuning use 1e-5 to 2e-4 (much lower, see Lesson 14 Fine-tuning &amp; PEFT).</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🛡️ Regularization: Fighting Overfitting</h3>\n                            <p>Without regularization, a deep network can memorize the training set. Five common defenses:</p>\n                            <ul>\n                                <li><strong>Dropout:</strong> randomly zero a fraction of activations during training (typical 0.1-0.5). Forces redundancy; the network can't rely on any single neuron. Disabled at inference.</li>\n                                <li><strong>L1 / L2 weight decay:</strong> add a penalty on the size of the weights to the loss. <strong>L1</strong> pushes small weights to zero (sparsity, feature selection). <strong>L2</strong> (weight decay) shrinks all weights gently. AdamW implements L2-style decay correctly.</li>\n                                <li><strong>Batch normalization:</strong> normalize each layer's activations to mean 0 / var 1, then learn scale and shift. Stabilizes and speeds training; reduces sensitivity to LR.</li>\n                                <li><strong>LayerNorm:</strong> the transformer-friendly variant - normalize per sample across features (not across the batch). Used everywhere inside modern transformers.</li>\n                                <li><strong>Early stopping:</strong> monitor a validation metric; stop (and revert to best) when it stops improving for N epochs. The cheapest, most universal regularizer.</li>\n                            </ul>\n                            <p><strong>Diagnostic:</strong> if train loss keeps dropping but val loss turns upward, you're overfitting - add dropout, weight decay, or early stopping. If both losses plateau high, you're underfitting - reduce regularization, train longer, or use a bigger model.</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🧪 Spot-the-Overfit Checklist</h3>\n                            <ul>\n                                <li>Train acc much higher than val acc (gap > 10 points)</li>\n                                <li>Train loss still decreasing but val loss starts increasing</li>\n                                <li>Model performs very differently on different random seeds - high variance</li>\n                                <li>Performance drops sharply when you remove a few training examples - the model memorized them</li>\n                            </ul>\n                            <p>One or more of these? Reaction: dropout, weight decay, early stopping, more data (or augmentation).</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>💪 Why Deep Learning?</h3>\n                            <ul>\n                                <li><strong>Automatic Feature Learning:</strong> No manual feature engineering</li>\n                                <li><strong>Hierarchical Representations:</strong> Low-level → high-level features</li>\n                                <li><strong>Scalability:</strong> Improves with more data and compute</li>\n                                <li><strong>Versatility:</strong> Works for images, text, audio, etc.</li>\n                            </ul>\n                        </div>\n                    ",
+  "concepts": [
+    "Perceptrons",
+    "Activation Functions",
+    "Network Architecture",
+    "Forward Propagation",
+    "Backpropagation",
+    "Optimizers (SGD/Momentum/Adam/AdamW)",
+    "Regularization (dropout/L1/L2/batch norm/early stopping)",
+    "Overfitting diagnosis"
+  ],
+  "quiz": {
+    "id": "nn_intro_quiz",
+    "title": "Neural Networks Quiz",
+    "passingScore": 60,
+    "timeLimit": 480,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "What is the primary purpose of an activation function?",
+        "options": [
+          {
+            "text": "Introduce non-linearity (without it, deep networks collapse to a single linear layer)",
+            "isCorrect": true
+          },
+          {
+            "text": "Make the network faster",
+            "isCorrect": false
+          },
+          {
+            "text": "Store the weights",
+            "isCorrect": false
+          },
+          {
+            "text": "Connect neurons",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Activation functions introduce non-linearity. Without them, stacking layers is mathematically equivalent to a single linear layer, so depth adds nothing.",
+        "difficulty": 2,
+        "concept": "Activation Functions"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Which activation function is most commonly used in hidden layers?",
+        "options": [
+          {
+            "text": "ReLU",
+            "isCorrect": true
+          },
+          {
+            "text": "Sigmoid",
+            "isCorrect": false
+          },
+          {
+            "text": "Tanh",
+            "isCorrect": false
+          },
+          {
+            "text": "Linear",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "ReLU is the default for hidden layers - cheap to compute, doesn't saturate for positive inputs, and trains well.",
+        "difficulty": 1,
+        "concept": "Activation Functions"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "What does the backpropagation algorithm do?",
+        "options": [
+          {
+            "text": "Computes gradients of the loss w.r.t. every weight using the chain rule",
+            "isCorrect": true
+          },
+          {
+            "text": "Reshuffles the training data",
+            "isCorrect": false
+          },
+          {
+            "text": "Initializes the weights randomly",
+            "isCorrect": false
+          },
+          {
+            "text": "Decides the activation functions",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Backprop applies the chain rule layer-by-layer from the loss backward, giving gradients used by the optimizer to update weights.",
+        "difficulty": 2,
+        "concept": "Backpropagation"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "If you remove all non-linearities from a 100-layer network, what is it equivalent to?",
+        "options": [
+          {
+            "text": "A single linear layer (composition of linear maps is linear)",
+            "isCorrect": true
+          },
+          {
+            "text": "A 100-layer non-linear network",
+            "isCorrect": false
+          },
+          {
+            "text": "A random function",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing changes - depth still matters",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Without nonlinear activations, the composition of matrices is just another matrix, so depth provides no extra expressiveness. This is why non-linearity is essential.",
+        "difficulty": 3,
+        "concept": "Activation Functions"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Softmax converts logits z into probabilities. What range are its outputs in and what do they sum to?",
+        "options": [
+          {
+            "text": "Each output in (0,1); they sum to 1",
+            "isCorrect": true
+          },
+          {
+            "text": "Each output in [-1, 1]; they sum to 0",
+            "isCorrect": false
+          },
+          {
+            "text": "Each output in [0, infinity); they sum to 1",
+            "isCorrect": false
+          },
+          {
+            "text": "Each output is unbounded; they sum to whatever",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Softmax exponentiates and normalizes; outputs are valid probabilities in (0,1) summing to 1. This makes it the standard output for classification.",
+        "difficulty": 2,
+        "concept": "Activation Functions"
+      }
+    ]
+  },
+  "animation": {
+    "type": "gradient-descent",
+    "title": "Gradient Descent Playground",
+    "description": "Drive gradient descent on a loss landscape; adjust LR / momentum / optimizer.",
+    "controls": [
+      "gdLrSlider",
+      "gdMomentumSlider",
+      "gdOptimizerSelector",
+      "stepGd",
+      "autoGd",
+      "resetGd"
+    ]
+  }
+}

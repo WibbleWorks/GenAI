@@ -1,0 +1,170 @@
+{
+  "id": "transfer_learning",
+  "title": "Transfer Learning",
+  "subtitle": "Feature Extraction, Fine-tuning, and Adaptation",
+  "level": "advanced",
+  "number": 11,
+  "estimatedTime": 60,
+  "difficulty": 3,
+  "prerequisites": [
+    "practical_tensorflow",
+    "embeddings"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Explain why transfer learning works and when it doesn't</li>\n                    <li>Choose between feature extraction and fine-tuning</li>\n                    <li>Use a pretrained backbone for vision and NLP tasks</li>\n                    <li>Avoid catastrophic forgetting and label leakage</li>\n                </ul>\n                <p><strong>Before you start:</strong> Complete Lessons 8 (TensorFlow) and 10 (Embeddings). You should know what a neural network layer and an embedding are.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🧭 The Core Idea</h3>\n                <p>Train a big model once on a big generic dataset. Then <em>transfer</em> what it learned to your task with a small dataset and a small budget.</p>\n                <p>Why this works: early layers learn general features (edges, n-grams) that transfer across tasks; only late layers need task-specific tuning.</p>\n                <p>Two main flavors:</p>\n                <ul>\n                    <li><strong>Feature extraction</strong> - freeze the pretrained backbone, train only a new head. Cheap, decent, works on tiny datasets.</li>\n                    <li><strong>Fine-tuning</strong> - unfreeze (some of) the backbone and continue training with a low learning rate. More expressive, needs more data and care.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📐 When Transfer Learning Helps (and When It Doesn't)</h3>\n                <p>It helps when:</p>\n                <ul>\n                    <li>Your target dataset is small.</li>\n                    <li>The source domain is similar to the target (e.g., ImageNet -> medical imaging keeps working longer than ImageNet -> audio spectrograms).</li>\n                    <li>The source model is general-purpose (foundation model).</li>\n                </ul>\n                <p>It doesn't help as much when:</p>\n                <ul>\n                    <li>Your target domain is very different from any pretrained model's training.</li>\n                    <li>You have plenty of target data - then training from scratch can match or beat transfer.</li>\n                    <li>The task is novel and there's no learned backbone that has useful features.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🖼️ Vision: Feature Extraction with a Pretrained Backbone</h3>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-33\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Feature extraction with MobileNetV3 (TensorFlow/Keras)</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-33')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-33')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\n\n# Last verified: 2025-07\n# Load a pretrained backbone, freeze it, train a new head on your dataset\nbackbone = tf.keras.applications.MobileNetV3Small(\n    input_shape=(224, 224, 3),\n    include_top=False,  # drop the 1000-class ImageNet head\n    weights=\"imagenet\"\n)\nbackbone.trainable = False  # feature-extraction mode\n\nmodel = models.Sequential([\n    backbone,\n    layers.GlobalAveragePooling2D(),\n    layers.Dropout(0.2),\n    layers.Dense(64, activation=\"relu\"),\n    layers.Dense(num_target_classes, activation=\"softmax\")\n])\n\nmodel.compile(optimizer=\"adam\", loss=\"sparse_categorical_crossentropy\", metrics=[\"accuracy\"])\nmodel.fit(train_ds, validation_data=val_ds, epochs=5)\n            </code></pre>\n                <div id=\"cb-33\" class=\"code-source\" style=\"display:none;\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\n\n# Last verified: 2025-07\n# Load a pretrained backbone, freeze it, train a new head on your dataset\nbackbone = tf.keras.applications.MobileNetV3Small(\n    input_shape=(224, 224, 3),\n    include_top=False,  # drop the 1000-class ImageNet head\n    weights=\"imagenet\"\n)\nbackbone.trainable = False  # feature-extraction mode\n\nmodel = models.Sequential([\n    backbone,\n    layers.GlobalAveragePooling2D(),\n    layers.Dropout(0.2),\n    layers.Dense(64, activation=\"relu\"),\n    layers.Dense(num_target_classes, activation=\"softmax\")\n])\n\nmodel.compile(optimizer=\"adam\", loss=\"sparse_categorical_crossentropy\", metrics=[\"accuracy\"])\nmodel.fit(train_ds, validation_data=val_ds, epochs=5)\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔧 Fine-tuning the Same Backbone</h3>\n                <p>After feature extraction has converged, <em>unfreeze</em> the last few layers of the backbone and resume training at a much lower learning rate.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-34\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Fine-tuning the last 20 backbone layers</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-34')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-34')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# Unfreeze the last 20 layers of the backbone and fine-tune\nbackbone.trainable = True\nfor layer in backbone.layers[:-20]:\n    layer.trainable = False\n\n# Crucially: use a LOW learning rate for fine-tuning\nmodel.compile(\n    optimizer=tf.keras.optimizers.Adam(1e-5),  # 10x lower than default\n    loss=\"sparse_categorical_crossentropy\",\n    metrics=[\"accuracy\"]\n)\nmodel.fit(train_ds, validation_data=val_ds, epochs=5)\n            </code></pre>\n                <div id=\"cb-34\" class=\"code-source\" style=\"display:none;\">\n# Unfreeze the last 20 layers of the backbone and fine-tune\nbackbone.trainable = True\nfor layer in backbone.layers[:-20]:\n    layer.trainable = False\n\n# Crucially: use a LOW learning rate for fine-tuning\nmodel.compile(\n    optimizer=tf.keras.optimizers.Adam(1e-5),  # 10x lower than default\n    loss=\"sparse_categorical_crossentropy\",\n    metrics=[\"accuracy\"]\n)\nmodel.fit(train_ds, validation_data=val_ds, epochs=5)\n            </div>\n            </div>\n        \n                <p><strong>Why low LR:</strong> the backbone is already good; we want to nudge it toward our task, not erase what it knows (catastrophic forgetting).</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🨄 NLP: Three Levels of Transfer</h3>\n                <ol>\n                    <li><strong>Use the pretrained model as-is</strong> (embeddings + classifier) - feature extraction.</li>\n                    <li><strong>Full fine-tune a BERT/encoder</strong> - unfreeze everything, train head + backbone with 2e-5 LR for 2-3 epochs.</li>\n                    <li><strong>PEFT (LoRA/QLoRA)</strong> - efficient adapter fine-tuning. See Lesson 14 (Fine-tuning &amp; PEFT) for the modern recipe.</li>\n                </ol>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-35\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Fine-tuning DistilBERT for binary classification</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-35')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-35')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom transformers import AutoTokenizer, TFAutoModelForSequenceClassification\n\n# Feature-extraction style: load a pretrained encoder and a fresh head\ntok = AutoTokenizer.from_pretrained(\"distilbert/distilbert-base-uncased\")\nmodel = TFAutoModelForSequenceClassification.from_pretrained(\n    \"distilbert/distilbert-base-uncased\", num_labels=2\n)\n\n# Full fine-tune (small LR, few epochs to avoid forgetting)\nfrom tensorflow.keras.optimizers import Adam\nmodel.compile(optimizer=Adam(2e-5), loss=model.compute_loss, metrics=[\"accuracy\"])\nmodel.fit(train_ds, validation_data=val_ds, epochs=2)\n            </code></pre>\n                <div id=\"cb-35\" class=\"code-source\" style=\"display:none;\">\nfrom transformers import AutoTokenizer, TFAutoModelForSequenceClassification\n\n# Feature-extraction style: load a pretrained encoder and a fresh head\ntok = AutoTokenizer.from_pretrained(\"distilbert/distilbert-base-uncased\")\nmodel = TFAutoModelForSequenceClassification.from_pretrained(\n    \"distilbert/distilbert-base-uncased\", num_labels=2\n)\n\n# Full fine-tune (small LR, few epochs to avoid forgetting)\nfrom tensorflow.keras.optimizers import Adam\nmodel.compile(optimizer=Adam(2e-5), loss=model.compute_loss, metrics=[\"accuracy\"])\nmodel.fit(train_ds, validation_data=val_ds, epochs=2)\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>⚠️ Pitfalls</h3>\n                <ul>\n                    <li><strong>Label leakage</strong> - if your fine-tuning set sneaks test examples in, your \"transfer\" looks better than it is. Strict splits only.</li>\n                    <li><strong>Catastrophic forgetting</strong> - fine-tuning too aggressively erases general skills. Mitigate with low LR, few epochs, or PEFT.</li>\n                    <li><strong>Wrong preprocessing</strong> - the backbone was trained on images normalized to ImageNet stats. Use the same preprocessing at inference, or quality tanks.</li>\n                    <li><strong>Variance in adapted features</strong> - freezing the backbone on a tiny target dataset can underfit; check validation across multiple random seeds.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>✅ Decision Shortcut</h3>\n                <ol>\n                    <li>Start with feature extraction (frozen backbone + a trainable head). 5 epochs.</li>\n                    <li>If accuracy is too low, try fine-tuning the last ~10% of the backbone at 10x lower LR.</li>\n                    <li>If still too low, gradually unfreeze more or move to PEFT (Lesson 14).</li>\n                    <li>If you have millions of target and the source domain differs, consider training from scratch.</li>\n                </ol>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>☁️ Run on Azure ML</h3>\n                \n            <div class=\"cloud-guide\" style=\"margin: 1.5rem 0; padding: 1.25rem; background: var(--surface-light); border-radius: 8px; border-left: 4px solid var(--ai-blue);\">\n                <h4 style=\"margin-bottom: 0.5rem;\">☁️ Azure Machine Learning</h4>\n                <p style=\"color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;\">Microsoft cloud ML platform</p>\n                \n                <h4>Azure ML Setup</h4>\n                <p><strong>Installation:</strong></p>\n                <pre>pip install \"azure-ai-ml>=1.13\"</pre>\n                <p><strong>Configuration:</strong></p>\n                <pre>from azureml.core import Workspace\nws = Workspace.from_config()</pre>\n                <p><strong>Features:</strong></p>\n                <ul>\n                    <li>Managed compute resources</li>\n                    <li>Automated ML</li>\n                    <li>Azure ML Designer (drag-and-drop)</li>\n                    <li>MLOps pipelines</li>\n                </ul>\n            \n                <details style=\"margin-top: 0.75rem;\">\n                    <summary style=\"cursor: pointer; color: var(--ai-blue); font-size: 0.875rem;\">Show example code</summary>\n                    <div style=\"margin-top: 0.5rem;\">\n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-9\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Azure ML Training</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-9')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-9')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom azureml.core import Workspace, Experiment, ScriptRunConfig\n\n# Get workspace\nws = Workspace.from_config()\n\n# Create experiment\nexperiment = Experiment(workspace=ws, name='my-experiment')\n\n# Create run config\nconfig = ScriptRunConfig(\n    source_directory='./src',\n    script='train.py',\n    compute_target='cpu-cluster'\n)\n\n# Submit run\nexperiment.submit(config)\n            </code></pre>\n                <div id=\"cb-9\" class=\"code-source\" style=\"display:none;\">\nfrom azureml.core import Workspace, Experiment, ScriptRunConfig\n\n# Get workspace\nws = Workspace.from_config()\n\n# Create experiment\nexperiment = Experiment(workspace=ws, name='my-experiment')\n\n# Create run config\nconfig = ScriptRunConfig(\n    source_directory='./src',\n    script='train.py',\n    compute_target='cpu-cluster'\n)\n\n# Submit run\nexperiment.submit(config)\n            </div>\n            </div>\n        </div>\n                </details>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💻 Try It Yourself</h3>\n                <div class=\"interactive-lab-mount\" data-mount=\"lab\"></div>\n            </div>\n        ",
+  "concepts": [
+    "Transfer learning",
+    "Feature extraction",
+    "Fine-tuning",
+    "Catastrophic forgetting",
+    "Pretrained backbones",
+    "Preprocessing consistency"
+  ],
+  "quiz": {
+    "id": "transfer_learning_quiz",
+    "title": "Transfer Learning Quiz",
+    "passingScore": 60,
+    "timeLimit": 480,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "You have 500 labeled images and want to classify a medical condition. Best first attempt?",
+        "options": [
+          {
+            "text": "Feature extraction with a pretrained ImageNet backbone and a trainable head",
+            "isCorrect": true
+          },
+          {
+            "text": "Train a CNN from scratch on the 500 images",
+            "isCorrect": false
+          },
+          {
+            "text": "Use an LLM on image captions",
+            "isCorrect": false
+          },
+          {
+            "text": "Hand-craft features with HOG and SVM",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "With small target data, feature extraction (frozen backbone + fresh head) is the cheapest and typically best first move.",
+        "difficulty": 2,
+        "concept": "Feature extraction"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "After feature extraction converges, you unfreeze the last 10 layers and keep training. What LR should you use?",
+        "options": [
+          {
+            "text": "An LR 10x lower than feature-extraction LR (often ~1e-5) to avoid erasing pretrained features",
+            "isCorrect": true
+          },
+          {
+            "text": "The same LR - momentum carries over",
+            "isCorrect": false
+          },
+          {
+            "text": "A higher LR to escape the local minimum",
+            "isCorrect": false
+          },
+          {
+            "text": "LR doesn't matter for fine-tuning",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Fine-tuning a pretrained backbone at high LR causes catastrophic forgetting. Use ~1e-5 for ~2-3 epochs.",
+        "difficulty": 2,
+        "concept": "Fine-tuning"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "Why does the same ImageNet-trained backbone give terrible results on audio spectrograms?",
+        "options": [
+          {
+            "text": "Domain shift - ImageNet features (edges, textures) don't transfer to spectrogram patterns",
+            "isCorrect": true
+          },
+          {
+            "text": "ImageNet models can't process 2D inputs",
+            "isCorrect": false
+          },
+          {
+            "text": "Spectrograms need a different loss function",
+            "isCorrect": false
+          },
+          {
+            "text": "Audio can't be embedded at all",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Transfer learning only helps when source and target domains share useful features. ImageNet features don't transfer well to audio spectrograms.",
+        "difficulty": 2,
+        "concept": "When transfer helps"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "You trained your classifier on a backbone pretrained on ImageNet but forgot to apply ImageNet preprocessing at inference. What happens?",
+        "options": [
+          {
+            "text": "Quality tanks - the backbone expects the same input distribution it was trained on",
+            "isCorrect": true
+          },
+          {
+            "text": "Nothing - backbones are robust to preprocessing",
+            "isCorrect": false
+          },
+          {
+            "text": "It becomes faster",
+            "isCorrect": false
+          },
+          {
+            "text": "It becomes slower",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Pretrained models assume the exact preprocessing used at training. ImageNet uses specific mean/std normalization. Apply the same at inference.",
+        "difficulty": 1,
+        "concept": "Pitfalls"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Which is the modern efficient alternative to full fine-tuning of a 7B-parameter LLM?",
+        "options": [
+          {
+            "text": "PEFT (LoRA / QLoRA) - freeze the base, train small adapter matrices",
+            "isCorrect": true
+          },
+          {
+            "text": "Train a new 7B model from scratch",
+            "isCorrect": false
+          },
+          {
+            "text": "Use only feature extraction (frozen model + linear head)",
+            "isCorrect": false
+          },
+          {
+            "text": "Switch to a smaller model and train from scratch",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "PEFT freezes the base and trains tiny adapter weights - memory and storage drop dramatically. See Lesson 14 for the recipe.",
+        "difficulty": 2,
+        "concept": "PEFT"
+      }
+    ]
+  },
+  "animation": {
+    "type": "nn-visualizer",
+    "title": "Backbone + Head Visualizer",
+    "description": "Visualize a frozen backbone with a trainable classification head.",
+    "controls": [
+      "addLayer",
+      "changeActivation",
+      "train"
+    ]
+  }
+}

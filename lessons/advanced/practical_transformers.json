@@ -1,0 +1,170 @@
+{
+  "id": "practical_transformers",
+  "title": "Hands-on Transformers",
+  "subtitle": "State-of-the-Art NLP with HuggingFace Transformers",
+  "level": "advanced",
+  "number": 9,
+  "estimatedTime": 90,
+  "difficulty": 4,
+  "prerequisites": [
+    "practical_tensorflow"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🨄 Transformers Overview</h3>\n                <p><strong>Transformers</strong> are a revolutionary neural network architecture for NLP.</p>\n                <ul>\n                    <li><strong>Invented:</strong> 2017 by Google (Vaswani et al.)</li>\n                    <li><strong>Key Innovation:</strong> Self-attention mechanism</li>\n                    <li><strong>Advantages:</strong> Parallel processing, long-range dependencies, state-of-the-art results</li>\n                    <li><strong>Models:</strong> BERT, RoBERTa, GPT, T5, etc.</li>\n                </ul>\n                <p><strong>Installation:</strong></p>\n                <pre style=\"background: var(--code-bg); padding: 1rem; border-radius: 4px;\">pip install \"transformers>=4.44\" \"datasets>=2.20\" \"torch>=2.4\"</pre>\n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>🎯 Quick Start with Pipelines</h3>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-4\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>HuggingFace: NLP Pipelines</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-4')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-4')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom transformers import pipeline\n\n# Text classification\nclassifier = pipeline(\"text-classification\", model=\"distilbert/distilbert-base-uncased-finetuned-sst-2-english\")\nresult = classifier(\"I love this course!\")\nprint(f\"Sentiment: {result[0]['label']}, Confidence: {result[0]['score']:.2f}\")\n\n# Text generation (use max_new_tokens, not max_length, on modern transformers)\ngenerator = pipeline(\"text-generation\", model=\"openai-community/gpt2\")\nresult = generator(\"The future of AI is\", max_new_tokens=50)\nprint(f\"Generated: {result[0]['generated_text']}\")\n\n# Question answering\nqa = pipeline(\"question-answering\", model=\"distilbert/distilbert-base-cased-distilled-squad\")\nresult = qa(\n    question=\"What is AI?\",\n    context=\"Artificial Intelligence is the simulation of human intelligence by machines.\"\n)\nprint(f\"Answer: {result['answer']}\")\n            </code></pre>\n                <div id=\"cb-4\" class=\"code-source\" style=\"display:none;\">\nfrom transformers import pipeline\n\n# Text classification\nclassifier = pipeline(\"text-classification\", model=\"distilbert/distilbert-base-uncased-finetuned-sst-2-english\")\nresult = classifier(\"I love this course!\")\nprint(f\"Sentiment: {result[0]['label']}, Confidence: {result[0]['score']:.2f}\")\n\n# Text generation (use max_new_tokens, not max_length, on modern transformers)\ngenerator = pipeline(\"text-generation\", model=\"openai-community/gpt2\")\nresult = generator(\"The future of AI is\", max_new_tokens=50)\nprint(f\"Generated: {result[0]['generated_text']}\")\n\n# Question answering\nqa = pipeline(\"question-answering\", model=\"distilbert/distilbert-base-cased-distilled-squad\")\nresult = qa(\n    question=\"What is AI?\",\n    context=\"Artificial Intelligence is the simulation of human intelligence by machines.\"\n)\nprint(f\"Answer: {result['answer']}\")\n            </div>\n            </div>\n        \n                <p><strong>Available Pipelines:</strong> text-classification, text-generation, question-answering, translation, summarization, etc.</p>\n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>🔬 Tokenization</h3>\n                <p><strong>Understanding Tokenizers:</strong></p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-28\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Tokenization with BERT</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-28')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-28')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom transformers import AutoTokenizer\n\n# Load tokenizer\ntokenizer = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\n\n# Tokenize text\ntext = \"Hello, how are you?\"\ntokens = tokenizer.tokenize(text)\nprint(\"Tokens:\", tokens)\n\n# Convert tokens to IDs\ninput_ids = tokenizer.encode(text, add_special_tokens=True)\nprint(\"Input IDs:\", input_ids)\n\n# Decode IDs back to text\ndecoded = tokenizer.decode(input_ids)\nprint(\"Decoded:\", decoded)\n\n# Full tokenization with attention mask\ninputs = tokenizer(text, return_tensors=\"pt\", padding=True, truncation=True)\nprint(\"Input IDs:\", inputs[\"input_ids\"])\nprint(\"Attention Mask:\", inputs[\"attention_mask\"])\n</code></pre>\n                <div id=\"cb-28\" class=\"code-source\" style=\"display:none;\">\nfrom transformers import AutoTokenizer\n\n# Load tokenizer\ntokenizer = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\n\n# Tokenize text\ntext = \"Hello, how are you?\"\ntokens = tokenizer.tokenize(text)\nprint(\"Tokens:\", tokens)\n\n# Convert tokens to IDs\ninput_ids = tokenizer.encode(text, add_special_tokens=True)\nprint(\"Input IDs:\", input_ids)\n\n# Decode IDs back to text\ndecoded = tokenizer.decode(input_ids)\nprint(\"Decoded:\", decoded)\n\n# Full tokenization with attention mask\ninputs = tokenizer(text, return_tensors=\"pt\", padding=True, truncation=True)\nprint(\"Input IDs:\", inputs[\"input_ids\"])\nprint(\"Attention Mask:\", inputs[\"attention_mask\"])\n</div>\n            </div>\n        \n                <p><strong>Special Tokens:</strong> [CLS] (classification), [SEP] (separator), [PAD] (padding), [UNK] (unknown), [MASK] (masked).</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🧩 Tokenizer Playground: BPE vs WordPiece vs SentencePiece</h3>\n                <p>Modern transformer tokenizers split text into <em>sub-word</em> units, not whole words. Different algorithms take different approaches - the choice affects vocabulary size, multilingual handling, and out-of-vocabulary rate.</p>\n                <ul>\n                    <li><strong>WordPiece</strong> (BERT, DistilBERT): greedy longest-match on a learned vocabulary of sub-words; \"unfriendly\" becomes [\"un\", \"##friendly\"].</li>\n                    <li><strong>BPE</strong> (GPT-2/3, RoBERTa, Llama): builds vocabulary by merging the most frequent pairs iteratively; deterministic; no [UNK] - any text is tokenizable.</li>\n                    <li><strong>SentencePiece</strong> (T5, mT5, ALBERT, Llama tokenizer): language-agnostic; treats input as a raw stream and works for any script without spaces (Chinese, Japanese, Thai).</li>\n                </ul>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-29\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Compare BPE / WordPiece / SentencePiece on the same input</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-29')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-29')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# pip install \"transformers&gt;=4.44\"; Last verified: 2025-07\nfrom transformers import AutoTokenizer\n\ntext = \"Tokenization makes weirdness manageable.\"\n\ntoks = {\n    \"BERT (WordPiece)\":     \"bert-base-uncased\",\n    \"GPT-2 (BPE)\":          \"openai-community/gpt2\",\n    \"T5 (SentencePiece)\":   \"google-t5/t5-base\",\n}\n\nfor label, model_id in toks.items():\n    tok = AutoTokenizer.from_pretrained(model_id)\n    pieces = tok.tokenize(text)\n    print(f\"{label} ({len(pieces)} tokens): {pieces}\")\n    decoded = tok.decode(tok.encode(text), skip_special_tokens=True)\n    print(f\"  Decoded back: {decoded!r}\")\n            </code></pre>\n                <div id=\"cb-29\" class=\"code-source\" style=\"display:none;\">\n# pip install \"transformers&gt;=4.44\"; Last verified: 2025-07\nfrom transformers import AutoTokenizer\n\ntext = \"Tokenization makes weirdness manageable.\"\n\ntoks = {\n    \"BERT (WordPiece)\":     \"bert-base-uncased\",\n    \"GPT-2 (BPE)\":          \"openai-community/gpt2\",\n    \"T5 (SentencePiece)\":   \"google-t5/t5-base\",\n}\n\nfor label, model_id in toks.items():\n    tok = AutoTokenizer.from_pretrained(model_id)\n    pieces = tok.tokenize(text)\n    print(f\"{label} ({len(pieces)} tokens): {pieces}\")\n    decoded = tok.decode(tok.encode(text), skip_special_tokens=True)\n    print(f\"  Decoded back: {decoded!r}\")\n            </div>\n            </div>\n        \n                <p><strong>Practical tip:</strong> token count - not word count - determines cost (per-token APIs), context-window usage (Lesson 13 RAG), and embedding quality. Always check tokens when budgeting a system.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🚀 Fine-Tuning a Transformer</h3>\n                <p><strong>Fine-tuning BERT for Text Classification:</strong></p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-30\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Fine-Tuning BERT</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-30')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-30')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer\nfrom datasets import load_dataset\nimport numpy as np\n\n# Load dataset\ndataset = load_dataset(\"imdb\")\n\n# Load tokenizer and model\ntokenizer = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"bert-base-uncased\", num_labels=2)\n\n# Tokenize dataset\ndef tokenize_function(examples):\n    return tokenizer(examples[\"text\"], padding=\"max_length\", truncation=True, max_length=512)\n\ntokenized_datasets = dataset.map(tokenize_function, batched=True)\n\n# Define metrics\ndef compute_metrics(eval_pred):\n    logits, labels = eval_pred\n    predictions = np.argmax(logits, axis=-1)\n    return {\"accuracy\": (predictions == labels).mean()}\n\n# Training arguments\ntraining_args = TrainingArguments(\n    output_dir=\"./results\",\n    evaluation_strategy=\"epoch\",\n    learning_rate=2e-5,\n    per_device_train_batch_size=8,\n    per_device_eval_batch_size=8,\n    num_train_epochs=3,\n    weight_decay=0.01\n)\n\n# Trainer\ntrainer = Trainer(\n    model=model,\n    args=training_args,\n    train_dataset=tokenized_datasets[\"train\"],\n    eval_dataset=tokenized_datasets[\"test\"],\n    compute_metrics=compute_metrics\n)\n\n# Train\ntrainer.train()\n\n# Evaluate\neval_results = trainer.evaluate()\nprint(f\"Evaluation Results: {eval_results}\")\n            </code></pre>\n                <div id=\"cb-30\" class=\"code-source\" style=\"display:none;\">\nfrom transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer\nfrom datasets import load_dataset\nimport numpy as np\n\n# Load dataset\ndataset = load_dataset(\"imdb\")\n\n# Load tokenizer and model\ntokenizer = AutoTokenizer.from_pretrained(\"bert-base-uncased\")\nmodel = AutoModelForSequenceClassification.from_pretrained(\"bert-base-uncased\", num_labels=2)\n\n# Tokenize dataset\ndef tokenize_function(examples):\n    return tokenizer(examples[\"text\"], padding=\"max_length\", truncation=True, max_length=512)\n\ntokenized_datasets = dataset.map(tokenize_function, batched=True)\n\n# Define metrics\ndef compute_metrics(eval_pred):\n    logits, labels = eval_pred\n    predictions = np.argmax(logits, axis=-1)\n    return {\"accuracy\": (predictions == labels).mean()}\n\n# Training arguments\ntraining_args = TrainingArguments(\n    output_dir=\"./results\",\n    evaluation_strategy=\"epoch\",\n    learning_rate=2e-5,\n    per_device_train_batch_size=8,\n    per_device_eval_batch_size=8,\n    num_train_epochs=3,\n    weight_decay=0.01\n)\n\n# Trainer\ntrainer = Trainer(\n    model=model,\n    args=training_args,\n    train_dataset=tokenized_datasets[\"train\"],\n    eval_dataset=tokenized_datasets[\"test\"],\n    compute_metrics=compute_metrics\n)\n\n# Train\ntrainer.train()\n\n# Evaluate\neval_results = trainer.evaluate()\nprint(f\"Evaluation Results: {eval_results}\")\n            </div>\n            </div>\n        \n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>🎨 Visualizing Self-Attention (Token Heatmap)</h3>\n                <p>The transformer's key innovation is self-attention - each token attends to every other token. Visualizing <em>which</em> tokens attend to <em>which</em> is one of the best debugging tools for understanding model behavior.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-31\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Plotting per-token self-attention from BERT</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-31')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-31')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# pip install \"transformers&gt;=4.44\" matplotlib torch; Last verified: 2025-07\nfrom transformers import AutoTokenizer, AutoModel\nimport torch, matplotlib.pyplot as plt\n\nmodel_id = \"bert-base-uncased\"\ntok = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModel.from_pretrained(model_id, output_attentions=True)\nmodel.eval()\n\ntext = \"The cat sat on the mat because it was warm.\"\nenc = tok(text, return_tensors=\"pt\")\nwith torch.no_grad():\n    out = model(**enc)\n\n# out.attentions is a tuple, one tensor per layer, shape (1, n_heads, seq, seq)\nattn = out.attentions[-1][0]   # last layer, all heads\navg_attn = attn.mean(dim=0)    # average across heads -&gt; (seq, seq)\n\ntokens = tok.convert_ids_to_tokens(enc[\"input_ids\"][0])\nfig, ax = plt.subplots(figsize=(8, 8))\nim = ax.imshow(avg_attn.numpy(), cmap=\"viridis\")\nax.set_xticks(range(len(tokens))); ax.set_xticklabels(tokens, rotation=90)\nax.set_yticks(range(len(tokens))); ax.set_yticklabels(tokens)\nax.set_xlabel(\"Attended-to (key)\")\nax.set_ylabel(\"Attending-from (query)\")\nax.set_title(\"Last-layer averaged attention\")\nplt.colorbar(im); plt.tight_layout(); plt.show()\n            </code></pre>\n                <div id=\"cb-31\" class=\"code-source\" style=\"display:none;\">\n# pip install \"transformers&gt;=4.44\" matplotlib torch; Last verified: 2025-07\nfrom transformers import AutoTokenizer, AutoModel\nimport torch, matplotlib.pyplot as plt\n\nmodel_id = \"bert-base-uncased\"\ntok = AutoTokenizer.from_pretrained(model_id)\nmodel = AutoModel.from_pretrained(model_id, output_attentions=True)\nmodel.eval()\n\ntext = \"The cat sat on the mat because it was warm.\"\nenc = tok(text, return_tensors=\"pt\")\nwith torch.no_grad():\n    out = model(**enc)\n\n# out.attentions is a tuple, one tensor per layer, shape (1, n_heads, seq, seq)\nattn = out.attentions[-1][0]   # last layer, all heads\navg_attn = attn.mean(dim=0)    # average across heads -&gt; (seq, seq)\n\ntokens = tok.convert_ids_to_tokens(enc[\"input_ids\"][0])\nfig, ax = plt.subplots(figsize=(8, 8))\nim = ax.imshow(avg_attn.numpy(), cmap=\"viridis\")\nax.set_xticks(range(len(tokens))); ax.set_xticklabels(tokens, rotation=90)\nax.set_yticks(range(len(tokens))); ax.set_yticklabels(tokens)\nax.set_xlabel(\"Attended-to (key)\")\nax.set_ylabel(\"Attending-from (query)\")\nax.set_title(\"Last-layer averaged attention\")\nplt.colorbar(im); plt.tight_layout(); plt.show()\n            </div>\n            </div>\n        \n                <p><strong>What to look for:</strong> do pronouns attend back to the nouns they refer to (\"it\" -> \"cat\" or \"mat\")? Do punctuation tokens attend to sentence-wide positions? Patterns here often reveal what the model has actually learned to track.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💡 Practical Tips</h3>\n                <ul>\n                    <li><strong>Use Pipelines:</strong> For quick inference without fine-tuning</li>\n                    <li><strong>Model Selection:</strong> Start with smaller models (distilbert) for faster inference</li>\n                    <li><strong>Quantization:</strong> Reduce model size for production</li>\n                    <li><strong>ONNX Export:</strong> Convert to ONNX for cross-framework compatibility</li>\n                </ul>\n            </div>\n        ",
+  "concepts": [
+    "Transformers",
+    "HuggingFace",
+    "Tokenization",
+    "Tokenizer types (WordPiece/BPE/SentencePiece)",
+    "Fine-Tuning",
+    "BERT",
+    "Pipelines",
+    "Self-attention heatmap"
+  ],
+  "quiz": {
+    "id": "practical_transformers_quiz",
+    "title": "Transformers Practical Quiz",
+    "passingScore": 60,
+    "timeLimit": 600,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "What is the key innovation in Transformer architecture?",
+        "options": [
+          {
+            "text": "Recurrent connections",
+            "isCorrect": false
+          },
+          {
+            "text": "Self-attention mechanism - parallel attention over the sequence, no recurrence",
+            "isCorrect": true
+          },
+          {
+            "text": "Convolutional layers",
+            "isCorrect": false
+          },
+          {
+            "text": "Pooling layers",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Self-attention lets every token attend to every other token in parallel - removing the sequential bottleneck of RNNs and enabling long-range dependencies.",
+        "difficulty": 2,
+        "concept": "Transformers"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Which token is used as the aggregate sequence representation for BERT classification?",
+        "options": [
+          {
+            "text": "[CLS] - its final hidden state is the classifier input",
+            "isCorrect": true
+          },
+          {
+            "text": "[SEP] - used to separate sentence pairs",
+            "isCorrect": false
+          },
+          {
+            "text": "[MASK] - used during pretraining only",
+            "isCorrect": false
+          },
+          {
+            "text": "[PAD] - used for batching only",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "[CLS] is prepended to the input; its final hidden state is the fixed-length sequence summary the classification head reads.",
+        "difficulty": 2,
+        "concept": "Tokenization"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "What distinguishes SentencePiece from WordPiece tokenizers?",
+        "options": [
+          {
+            "text": "SentencePiece is language-agnostic and treats input as a raw byte stream; WordPiece is English-first greedy longest-match",
+            "isCorrect": true
+          },
+          {
+            "text": "SentencePiece works only for English",
+            "isCorrect": false
+          },
+          {
+            "text": "WordPiece can tokenize any script without spaces",
+            "isCorrect": false
+          },
+          {
+            "text": "They are the same thing under different names",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "SentencePiece (T5, Llama) handles any script including non-space-delimited languages. WordPiece (BERT) produces ##-prefixed continuation pieces and is English-first.",
+        "difficulty": 2,
+        "concept": "Tokenizer types"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Why is the per-token attention heatmap useful?",
+        "options": [
+          {
+            "text": "It reveals which tokens the model attends to - a useful debugging signal",
+            "isCorrect": true
+          },
+          {
+            "text": "It speeds up training",
+            "isCorrect": false
+          },
+          {
+            "text": "It is a marketing visualization only",
+            "isCorrect": false
+          },
+          {
+            "text": "It re-trains the model",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Attention heatmaps are an introspection tool. They are NOT a causal explanation, but seeing e.g. pronouns attend to their antecedents is a useful check.",
+        "difficulty": 2,
+        "concept": "Self-attention heatmap"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Which is the right first step for a new NLP task with HuggingFace?",
+        "options": [
+          {
+            "text": "Use a pipeline() with a small pretrained model for the matching task (sentiment, NER, QA, etc.)",
+            "isCorrect": true
+          },
+          {
+            "text": "Fine-tune a 70B-parameter model on day one",
+            "isCorrect": false
+          },
+          {
+            "text": "Train BERT from scratch on your data",
+            "isCorrect": false
+          },
+          {
+            "text": "Skip pipelines and write raw Torch ops",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Start with a HuggingFace pipeline + a small pretrained model. Fine-tune only if quality requires it.",
+        "difficulty": 1,
+        "concept": "Pipelines"
+      }
+    ]
+  },
+  "animation": {
+    "type": "build-transformer",
+    "title": "Build a Transformer Step-Through",
+    "description": "Walk the five phases: embedding -> positional encoding -> self-attention -> FFN -> stack",
+    "controls": [
+      "nextTransformerStep",
+      "prevTransformerStep"
+    ]
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "id": "mlops_basics",
+  "title": "MLOps Basics",
+  "subtitle": "From Notebook to Production",
+  "level": "intermediate",
+  "number": 7,
+  "estimatedTime": 75,
+  "difficulty": 3,
+  "prerequisites": [
+    "practical_scikit"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Explain why a notebook is not an ML system</li>\n                    <li>Choose between batch and online prediction for a use case</li>\n                    <li>Set up training, deployment, and monitoring with MLOps</li>\n                    <li>Detect concept drift and data drift in production</li>\n                    <li>Version models and data reproducibly</li>\n                </ul>\n                <p><strong>Before you start:</strong> Complete Lesson 6 (Hands-on scikit-learn). You should understand the basic ML workflow.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🚪 Why \"Notebook to Production\" Is Hard</h3>\n                <p>A notebook that scores 0.97 on the test set is a <em>prototype</em>, not a system. In production you also need to:</p>\n                <ul>\n                    <li>Serve predictions (latency, throughput, availability)</li>\n                    <li>Reproduce the exact model later (data + code + hyperparams + env)</li>\n                    <li>Know when it's wrong (monitoring, alerting)</li>\n                    <li>Roll it forward / roll it back safely</li>\n                    <li>Update it without downtime</li>\n                </ul>\n                <p><strong>MLOps</strong> is the discipline of doing all of these repeatably. The maturity model has three levels:</p>\n                <ul>\n                    <li><strong>Level 0:</strong> manual training, manual deploy, no monitoring. (Most teams start here.)</li>\n                    <li><strong>Level 1:</strong> automated training pipeline; manual deploy; basic monitoring.</li>\n                    <li><strong>Level 2:</strong> CI/CD for both training code and serving; automated re-training triggers; full observability.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📦 Model Versioning & Reproducibility</h3>\n                <p>A model artifact by itself is meaningless. To reproduce it you need:</p>\n                <ol>\n                    <li>The training data (or a deterministic pointer to it - hash, S3 URI + version)</li>\n                    <li>The code (pinned in git at a commit SHA)</li>\n                    <li>The hyperparameters</li>\n                    <li>The environment (Python version, library versions, GPU/CPU)</li>\n                    <li>The data preprocessing pipeline</li>\n                </ol>\n                <p><strong>Treat a model as Code + Data + Config + Environment.</strong> Without all four, you cannot debug a regression or audit a decision.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-23\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Logging a reproducible run with MLflow</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-23')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-23')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# Use MLflow to record all four pieces together\nimport mlflow\nmlflow.set_experiment(\"titanic-survival\")\n\nwith mlflow.start_run():\n    mlflow.log_params({\"n_estimators\": 100, \"max_depth\": None, \"random_state\": 42})\n    mlflow.log_metric(\"accuracy\", 0.83)\n    mlflow.log_metric(\"precision_by_class_0\", 0.79)\n    mlflow.sklearn.log_model(model, \"model\", input_example=X_train[:5])\n    # Data + code + env are recorded by MLflow's autolog and tags\n    mlflow.set_tag(\"data_version\", \"v3.2\")\n    mlflow.set_tag(\"git_commit\", \"a1b2c3d\")\n            </code></pre>\n                <div id=\"cb-23\" class=\"code-source\" style=\"display:none;\">\n# Use MLflow to record all four pieces together\nimport mlflow\nmlflow.set_experiment(\"titanic-survival\")\n\nwith mlflow.start_run():\n    mlflow.log_params({\"n_estimators\": 100, \"max_depth\": None, \"random_state\": 42})\n    mlflow.log_metric(\"accuracy\", 0.83)\n    mlflow.log_metric(\"precision_by_class_0\", 0.79)\n    mlflow.sklearn.log_model(model, \"model\", input_example=X_train[:5])\n    # Data + code + env are recorded by MLflow's autolog and tags\n    mlflow.set_tag(\"data_version\", \"v3.2\")\n    mlflow.set_tag(\"git_commit\", \"a1b2c3d\")\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🚚 Deployment Patterns</h3>\n                <ul>\n                    <li><strong>Batch:</strong> run inference nightly over all new records. Cheapest, no latency requirement. (e.g. churn risk nightly.)</li>\n                    <li><strong>Real-time / synchronous:</strong> HTTP/gRPC call, p99 <100ms. Needs a serving layer (FastAPI, BentoML, KServe) and autoscaling.</li>\n                    <li><strong>Streaming:</strong> predictions on a stream (Kafka/Kinesis). Good for fraud, real-time ranking.</li>\n                    <li><strong>Edge / embedded:</strong> ship the model in the app (mobile, car, IoT). Bounded compute, offline.</li>\n                </ul>\n                <p><strong>Decision shortcut:</strong> can decisions wait 24h? Batch. Are decisions per-user-event under 200ms? Real-time. Are decisions for many events on a queue? Streaming.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-24\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>FastAPI model serving</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-24')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-24')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# Minimal FastAPI serving for a scikit-learn model\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\nimport joblib\n\napp = FastAPI()\nmodel = joblib.load(\"titanic_model.joblib\")\n\nclass Passenger(BaseModel):\n    Pclass: int\n    Sex: str\n    Age: float\n    SibSp: int\n    Parch: int\n    Fare: float\n    Embarked: str\n\n@app.post(\"/predict\")\ndef predict(p: Passenger):\n    features = preprocess(p)\n    proba = model.predict_proba([features])[0][1]\n    return {\"survival_probability\": float(proba)}\n\n# Run: uvicorn serve:app --host 0.0.0.0 --port 8000\n            </code></pre>\n                <div id=\"cb-24\" class=\"code-source\" style=\"display:none;\">\n# Minimal FastAPI serving for a scikit-learn model\nfrom fastapi import FastAPI\nfrom pydantic import BaseModel\nimport joblib\n\napp = FastAPI()\nmodel = joblib.load(\"titanic_model.joblib\")\n\nclass Passenger(BaseModel):\n    Pclass: int\n    Sex: str\n    Age: float\n    SibSp: int\n    Parch: int\n    Fare: float\n    Embarked: str\n\n@app.post(\"/predict\")\ndef predict(p: Passenger):\n    features = preprocess(p)\n    proba = model.predict_proba([features])[0][1]\n    return {\"survival_probability\": float(proba)}\n\n# Run: uvicorn serve:app --host 0.0.0.0 --port 8000\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📈 Monitoring</h3>\n                <p>Two families of metrics to track:</p>\n                <ul>\n                    <li><strong>Operational:</strong> QPS, latency p50/p95/p99, error rate, CPU/GPU/mem. These say \"is the service up?\"</li>\n                    <li><strong>ML-specific:</strong>\n                        <ul>\n                            <li><strong>Input / data drift:</strong> distribution of features changes vs. training. Measure with PSI, KL divergence, or KS test.</li>\n                            <li><strong>Concept drift:</strong> the relationship input->output changes. Harder; detect via delayed-label evaluation or proxy metrics (click-through rate, refusal rate).</li>\n                            <li><strong>Prediction distribution:</strong> if today's predictions skew wildly from yesterday's, investigate.</li>\n                            <li><strong>Performance:</strong> when ground truth eventually arrives, recompute accuracy/ROC/etc. on a rolling window.</li>\n                        </ul>\n                    </li>\n                </ul>\n                <div style=\"background: rgba(249, 115, 22, 0.1); border-left: 4px solid var(--ai-orange); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;\">\n                    <strong>Heuristic:</strong> if prediction distribution shifts > X% from training, alert the team and <em>do not auto-roll-back</em> automatically - the world might have changed and the new predictions might be correct. Investigate first.\n                </div>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔁 Continuous Training (CT)</h3>\n                <p>Trigger retraining on one of:</p>\n                <ul>\n                    <li><strong>Schedule</strong> (e.g., weekly). Simple, fits stable use cases.</li>\n                    <li><strong>Drift trigger</strong> (retrain when PSI > threshold). Reactive.</li>\n                    <li><strong>Performance trigger</strong> (retrain when online metric drops below threshold). Requires ground-truth feedback loop.</li>\n                    <li><strong>On-demand</strong> (manual). Use for low-volume or high-stakes models.</li>\n                </ul>\n                <p><strong>Golden rule:</strong> never auto-deploy a retrained model. Always evaluate against the current champion offline first, then promote via canary (e.g., 5% traffic -> 25% -> 100%).</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🧰 The Stack</h3>\n                <ul>\n                    <li><strong>Experiment tracking</strong>: MLflow, Weights &amp; Biases, Comet.</li>\n                    <li><strong>Model registry</strong>: MLflow Registry, Vertex AI Model Registry, SageMaker Model Registry.</li>\n                    <li><strong>Serving</strong>: FastAPI + Uvicorn (DIY), BentoML, KServe, SageMaker Endpoints, Vertex AI Endpoints.</li>\n                    <li><strong>Orchestration</strong>: Airflow, Prefect, Dagster, Kubeflow Pipelines.</li>\n                    <li><strong>Feature store</strong>: Feast, Tecton, Vertex AI Feature Store. Optional but very useful when the same features serve training and inference.</li>\n                </ul>\n                <p><strong>Don't start with the stack</strong> - start with reproducibility (MLflow tracking) and a simple deploy (FastAPI or batch). Add orchestration, registry, and feature store when you actually feel the pain they solve.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>☁️ Run on Vertex AI</h3>\n                \n            <div class=\"cloud-guide\" style=\"margin: 1.5rem 0; padding: 1.25rem; background: var(--surface-light); border-radius: 8px; border-left: 4px solid var(--ai-blue);\">\n                <h4 style=\"margin-bottom: 0.5rem;\">☁️ Google Vertex AI</h4>\n                <p style=\"color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.75rem;\">Google Cloud ML platform</p>\n                \n                <h4>Vertex AI Setup</h4>\n                <p><strong>Installation:</strong></p>\n                <pre>pip install \"google-cloud-aiplatform>=1.70\"</pre>\n                <p><strong>Authentication:</strong></p>\n                <pre>gcloud auth application-default login</pre>\n                <p><strong>Features:</strong></p>\n                <ul>\n                    <li>AutoML for custom training</li>\n                    <li>Pre-trained API models</li>\n                    <li>Vertex AI Workbench</li>\n                    <li>Model deployment and prediction</li>\n                </ul>\n            \n                <details style=\"margin-top: 0.75rem;\">\n                    <summary style=\"cursor: pointer; color: var(--ai-blue); font-size: 0.875rem;\">Show example code</summary>\n                    <div style=\"margin-top: 0.5rem;\">\n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-8\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Vertex AI Training</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-8')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-8')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nfrom google.cloud import aiplatform\n\n# Initialize\naiplatform.init(project=\"your-project-id\", location=\"us-central1\")\n\n# Create training job\ntraining_input = {\"scale_tier\": \"CUSTOM\", \"master_machine_type\": \"n1-standard-4\"}\njob = aiplatform.CustomTrainingJob(\n    display_name=\"my-training-job\",\n    script_path=\"train.py\",\n    container_uri=\"gcr.io/cloud-aiplatform/training/pytorch-gpu.1-9\"\n)\n\njob.run(training_input)\n            </code></pre>\n                <div id=\"cb-8\" class=\"code-source\" style=\"display:none;\">\nfrom google.cloud import aiplatform\n\n# Initialize\naiplatform.init(project=\"your-project-id\", location=\"us-central1\")\n\n# Create training job\ntraining_input = {\"scale_tier\": \"CUSTOM\", \"master_machine_type\": \"n1-standard-4\"}\njob = aiplatform.CustomTrainingJob(\n    display_name=\"my-training-job\",\n    script_path=\"train.py\",\n    container_uri=\"gcr.io/cloud-aiplatform/training/pytorch-gpu.1-9\"\n)\n\njob.run(training_input)\n            </div>\n            </div>\n        </div>\n                </details>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💻 Try It Yourself</h3>\n                <div class=\"interactive-lab-mount\" data-mount=\"lab\"></div>\n            </div>\n        ",
+  "concepts": [
+    "MLOps",
+    "Reproducibility",
+    "Deployment patterns",
+    "Drift",
+    "Monitoring",
+    "Continuous training",
+    "Model registry"
+  ],
+  "quiz": {
+    "id": "mlops_basics_quiz",
+    "title": "MLOps Basics Quiz",
+    "passingScore": 60,
+    "timeLimit": 540,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "Your notebook scores 0.97 on the test set. Which of these is NOT something you can ship without doing?",
+        "options": [
+          {
+            "text": "Promote it to production - 0.97 is enough; nothing else is needed",
+            "isCorrect": true
+          },
+          {
+            "text": "Reproduce the model with pinned deps, data hash, and code SHA",
+            "isCorrect": false
+          },
+          {
+            "text": "Set up monitoring for drift and latency",
+            "isCorrect": false
+          },
+          {
+            "text": "Plan a deployment pattern (batch/real-time/streaming)",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "A test-set score is a prototype's evidence, not a system's. You also need reproducibility, deployment, monitoring, and a rollback plan.",
+        "difficulty": 1,
+        "concept": "MLOps"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Decisions can wait 24 hours. Which deployment pattern fits best?",
+        "options": [
+          {
+            "text": "Batch - cheapest, no latency requirement",
+            "isCorrect": true
+          },
+          {
+            "text": "Real-time synchronous with autoscaling",
+            "isCorrect": false
+          },
+          {
+            "text": "Edge / embedded",
+            "isCorrect": false
+          },
+          {
+            "text": "Streaming on Kafka",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "A nightly batch job is the simplest, cheapest pattern when latency isn't required. Reach for real-time only when per-event latency matters.",
+        "difficulty": 2,
+        "concept": "Deployment patterns"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "Feature distribution today looks wildly different from training. What is this called and what should you do?",
+        "options": [
+          {
+            "text": "Data drift; investigate before auto-rolling back (the world may have changed, the model may be right)",
+            "isCorrect": true
+          },
+          {
+            "text": "Concept drift; immediately retrain",
+            "isCorrect": false
+          },
+          {
+            "text": "A bug; restart the server",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing; ignore it",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Data drift means inputs shifted. Investigate first - the model may be correctly responding to a changed world. Roll back only if predictions are wrong, not just different.",
+        "difficulty": 2,
+        "concept": "Drift"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Which of these is the right order to build an MLOps stack?",
+        "options": [
+          {
+            "text": "Start with reproducibility (MLflow tracking) + a simple deploy; add orchestration/registry/feature store only when you feel the pain",
+            "isCorrect": true
+          },
+          {
+            "text": "Buy the full stack on day one so you never have to migrate",
+            "isCorrect": false
+          },
+          {
+            "text": "Skip tracking; only monitoring matters",
+            "isCorrect": false
+          },
+          {
+            "text": "Skip deployment; only experimentation matters",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Build iteratively. Reproducibility + a basic deploy unblock everything else; the rest of the stack solves pains you'll discover later.",
+        "difficulty": 2,
+        "concept": "The Stack"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Auto-retrain and auto-deploy a retrained model on every drift alert. What's wrong with this?",
+        "options": [
+          {
+            "text": "Auto-retrain is fine; auto-deploy is not - always evaluate offline against the champion, then canary",
+            "isCorrect": true
+          },
+          {
+            "text": "Nothing; fully automated retraining is the goal",
+            "isCorrect": false
+          },
+          {
+            "text": "Drift alerts should be ignored",
+            "isCorrect": false
+          },
+          {
+            "text": "You should never retrain automatically",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Retraining can be automated, but deployment should never be fully automatic. Offline-eval a candidate vs. the champion; only then promote via canary (5% -> 25% -> 100%).",
+        "difficulty": 2,
+        "concept": "Continuous training"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "MLOps Loop",
+    "description": "Walk the MLOps loop: train -> package -> deploy -> monitor -> retrain trigger.",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  }
+}

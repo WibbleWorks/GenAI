@@ -1,0 +1,166 @@
+{
+  "id": "ai_introduction",
+  "title": "Introduction to AI",
+  "subtitle": "Fundamentals of Artificial Intelligence",
+  "level": "beginner",
+  "number": 1,
+  "estimatedTime": 45,
+  "difficulty": 1,
+  "prerequisites": [],
+  "content": "\n                        <div class=\"lesson-section\">\n                            <h3>🤖 What is Artificial Intelligence?</h3>\n                            <p><strong>Definition:</strong> AI is the field of building systems that perform tasks normally requiring human intelligence - perception, reasoning, language, decision-making, and learning.</p>\n                            <p><strong>Important distinction:</strong> AI is the broad field. <em>Machine Learning</em> is one approach within AI where systems learn patterns from data. Not all AI learns from data - symbolic AI and expert systems use rules and logic instead.</p>\n                            <p><strong>Key Characteristics:</strong> Reasoning, perception, action, adaptation, language understanding.</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>📜 Brief History of AI</h3>\n                            <p><strong>1950-1956 - Birth:</strong> Turing Test (1950), Dartmouth Conference (1956) coins the term \"Artificial Intelligence.\"</p>\n                            <p><strong>1956-1974 - Golden Years:</strong> LISP, ELIZA, the Perceptron; optimism and heavy funding.</p>\n                            <p><strong>1974-1980 - First AI Winter:</strong> Funding cuts as early methods hit limits (Lighthill Report).</p>\n                            <p><strong>1980-1987 - Expert Systems:</strong> Rule-based systems see commercial success.</p>\n                            <p><strong>1987-1993 - Second AI Winter:</strong> Expert-system market collapses.</p>\n                            <p><strong>1993-2010 - Machine Learning Era:</strong> SVMs, statistical learning, neural networks; data and compute grow.</p>\n                            <p><strong>2010-2016 - Deep Learning Breakthrough:</strong> AlexNet (2012), GPUs, big data; CNNs dominate vision.</p>\n                            <p><strong>2016-2023 - AI Renaissance:</strong> AlphaGo, Transformers (2017), GPT/LLMs, generative AI.</p>\n                            <p><strong>2023-Present - Agentic &amp; Multimodal AI:</strong> Tool-using agents, multimodal models, reasoning models, open-weight ecosystems.</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🎯 Types of AI</h3>\n                            <p><strong>By Capability:</strong> Narrow AI (current) → General AI (hypothetical) → Super AI (theoretical)</p>\n                            <p><strong>By Functionality:</strong> Reactive → Limited Memory → Theory of Mind → Self-Aware</p>\n                            <p><strong>Note:</strong> Every AI system that exists today is Narrow AI - it is specialized for a task or family of tasks. AGI remains a research goal.</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>💡 AI vs ML vs Deep Learning</h3>\n                            <p><strong>Relationship:</strong> Deep Learning ⊂ Machine Learning ⊂ Artificial Intelligence</p>\n                            <ul>\n                                <li><strong>AI:</strong> Any system performing tasks that normally require human intelligence (can be rule-based or learned)</li>\n                                <li><strong>ML:</strong> Systems that learn patterns from data instead of being explicitly programmed</li>\n                                <li><strong>DL:</strong> ML using neural networks with many layers</li>\n                            </ul>\n                            <p><strong>Quick check:</strong> A hand-written rules engine for diagnosing diseases is AI but <em>not</em> ML. A spam filter trained on millions of emails is both AI and ML.</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🚀 Why AI Matters Now</h3>\n                            <p><strong>Convergence:</strong> Data explosion + GPU/TPU acceleration + algorithm breakthroughs</p>\n                            <p><strong>Impact Areas:</strong> Productivity, Healthcare, Finance, Education, Entertainment, Science</p>\n                            <p><strong>Responsibility:</strong> With capability comes the duty to handle bias, safety, privacy, and societal impact - covered in the next lesson on AI Ethics.</p>\n                        </div>\n                    ",
+  "concepts": [
+    "AI Definition",
+    "AI History",
+    "Types of AI",
+    "AI vs ML",
+    "ML vs DL"
+  ],
+  "quiz": {
+    "id": "ai_intro_quiz",
+    "title": "AI Introduction Quiz",
+    "passingScore": 60,
+    "timeLimit": 360,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "Which statement best describes Artificial Intelligence?",
+        "options": [
+          {
+            "text": "Systems that perform tasks normally requiring human intelligence",
+            "isCorrect": true
+          },
+          {
+            "text": "Systems that always learn from data",
+            "isCorrect": false
+          },
+          {
+            "text": "Any program written in Python",
+            "isCorrect": false
+          },
+          {
+            "text": "Systems that are always more accurate than humans",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "AI is the broad field of building systems that perform tasks requiring human intelligence. Learning from data is specific to ML (a subset of AI) - symbolic AI and expert systems are AI but do not learn from data.",
+        "difficulty": 1,
+        "concept": "AI Definition"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "A rule-based expert system for medical diagnosis is an example of:",
+        "options": [
+          {
+            "text": "AI but not ML",
+            "isCorrect": true
+          },
+          {
+            "text": "ML but not AI",
+            "isCorrect": false
+          },
+          {
+            "text": "Both AI and ML",
+            "isCorrect": false
+          },
+          {
+            "text": "Neither AI nor ML",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Expert systems use hand-written rules and logic - they are AI but do not learn from data, so they are not Machine Learning. ML is a subset of AI that learns from data.",
+        "difficulty": 2,
+        "concept": "AI vs ML"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "What is the relationship between AI, ML, and DL?",
+        "options": [
+          {
+            "text": "DL ⊂ ML ⊂ AI",
+            "isCorrect": true
+          },
+          {
+            "text": "They are separate fields",
+            "isCorrect": false
+          },
+          {
+            "text": "AI ⊂ ML ⊂ DL",
+            "isCorrect": false
+          },
+          {
+            "text": "ML and DL are the same",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Deep Learning is a subset of Machine Learning, which is a subset of Artificial Intelligence.",
+        "difficulty": 2,
+        "concept": "ML vs DL"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Which historical period is known as the 'AI Winter'?",
+        "options": [
+          {
+            "text": "1974-1980 (and again 1987-1993) - funding cuts as early methods hit limits",
+            "isCorrect": true
+          },
+          {
+            "text": "1950-1956 - the Dartmouth Conference",
+            "isCorrect": false
+          },
+          {
+            "text": "2010-2016 - the deep-learning breakthrough",
+            "isCorrect": false
+          },
+          {
+            "text": "2023-present - the agentic-AI era",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "AI Winters (1974-80, 1987-93) followed periods of overhyped expectations; funding collapsed. They're a reminder to be skeptical of hype cycles.",
+        "difficulty": 1,
+        "concept": "AI History"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Every AI system that exists today falls into which capability category?",
+        "options": [
+          {
+            "text": "Narrow AI - specialized for a task or family of tasks; AGI remains a research goal",
+            "isCorrect": true
+          },
+          {
+            "text": "General AI - today's models can do any task a human can",
+            "isCorrect": false
+          },
+          {
+            "text": "Super AI - today's models exceed humans on every task",
+            "isCorrect": false
+          },
+          {
+            "text": "Reactive AI only - no learning whatsoever",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "All current AI is Narrow AI (ANI). AGI (general intelligence across domains) and ASI (superintelligence) are hypothetical; no current system qualifies.",
+        "difficulty": 1,
+        "concept": "Types of AI"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ai-timeline",
+    "title": "AI History Timeline",
+    "description": "Explore AI evolution from 1950 to present",
+    "controls": [
+      "play",
+      "pause",
+      "jumpToEra"
+    ]
+  }
+}

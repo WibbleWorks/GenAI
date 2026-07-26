@@ -20,7 +20,7 @@
     /* Text Colors */
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
+    --text-muted: #c5d4e3;
     --text-inverse: #0f172a;
     
     /* Border & Accent Colors */
@@ -168,7 +168,7 @@ body {
 }
 
 .score-display span, .confidence-level span {
-    color: var(--ai-green);
+    color: #6ee7b7;
     font-weight: 600;
 }
 
@@ -288,31 +288,37 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    border: 1px solid transparent;
 }
 
 .level-badge.beginner {
-    background: rgba(16, 185, 129, 0.2);
-    color: var(--ai-green);
+    background: var(--surface-color);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.4);
 }
 
 .level-badge.intermediate {
-    background: rgba(59, 130, 246, 0.2);
-    color: var(--ai-blue);
+    background: var(--surface-color);
+    color: #7cc3fd;
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
 .level-badge.advanced {
-    background: rgba(139, 92, 246, 0.2);
-    color: var(--ai-purple);
+    background: var(--surface-color);
+    color: #c4b5fd;
+    border-color: rgba(139, 92, 246, 0.4);
 }
 
 .level-badge.expert {
-    background: rgba(249, 115, 22, 0.2);
-    color: var(--ai-orange);
+    background: var(--surface-color);
+    color: #fdba74;
+    border-color: rgba(249, 115, 22, 0.4);
 }
 
-.level-badge.phd {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--ai-red);
+.level-badge.research {
+    background: var(--surface-color);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Stats Grid */
@@ -342,7 +348,7 @@ body {
 .stat-value {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--ai-blue);
+    color: #7cc3fd;
 }
 
 .stat-subtext {
@@ -355,6 +361,21 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+}
+
+/* Links inside lesson content — use a brighter blue for AA contrast */
+.content-area a,
+.lesson-content a,
+.lab-output a,
+.lesson-content summary,
+.cloud-guide summary {
+    color: #a5d4ff;
+}
+.content-area a:hover,
+.lesson-content a:hover,
+.content-area a:focus,
+.lesson-content a:focus {
+    text-decoration: underline;
 }
 
 .lesson-container {
@@ -947,35 +968,73 @@ body {
 /* Responsive Design */
 @media (max-width: 1200px) {
     .main-content {
-        grid-template-columns: 250px 1fr;
+        /* Keep all three columns but shrink the side panel so the quiz
+           remains reachable on tablets. The original rule hid the panel
+           entirely, which removed both the animations AND the quiz. */
+        grid-template-columns: 240px 1fr 320px;
     }
-    
-    .interactive-panel {
-        display: none;
-    }
+}
+
+/* Mobile navigation toggle visible only on small screens */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
 }
 
 @media (max-width: 900px) {
     .main-content {
         grid-template-columns: 1fr;
     }
-    
+
     .sidebar {
-        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+        box-shadow: var(--shadow-lg);
     }
-    
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .nav-toggle {
+        display: inline-block;
+    }
+
     .course-header {
         flex-direction: column;
         gap: var(--spacing-md);
         padding: var(--spacing-md);
     }
-    
+
     .progress-container {
         width: 100%;
     }
-    
+
     .progress-bar {
         width: 100%;
+    }
+
+    /* Move the interactive panel below the lesson on mobile so the
+       quiz and animations are always reachable. */
+    .interactive-panel {
+        grid-column: 1;
+        order: 2;
+        max-height: 70vh;
+    }
+
+    .content-area {
+        order: 1;
     }
 }
 
@@ -985,17 +1044,17 @@ body {
         align-items: flex-start;
         gap: var(--spacing-md);
     }
-    
+
     .lesson-number {
         width: 40px;
         height: 40px;
         font-size: 1rem;
     }
-    
+
     .lesson-title {
         font-size: 1.5rem;
     }
-    
+
     .final-stats {
         flex-direction: column;
         gap: var(--spacing-md);

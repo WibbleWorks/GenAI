@@ -1,0 +1,168 @@
+{
+  "id": "ml_introduction",
+  "title": "Introduction to ML",
+  "subtitle": "How Machines Learn from Data",
+  "level": "beginner",
+  "number": 2,
+  "estimatedTime": 45,
+  "difficulty": 2,
+  "prerequisites": [
+    "ai_introduction"
+  ],
+  "content": "\n                        <div class=\"lesson-section\">\n                            <h3>🎯 What is Machine Learning?</h3>\n                            <p><strong>Definition:</strong> ML gives systems the ability to automatically learn and improve from experience without being explicitly programmed.</p>\n                            <p><strong>Tom Mitchell:</strong> \"A program learns from experience E with respect to tasks T and performance P, if its performance at T improves with E.\"</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>🔄 ML Workflow</h3>\n                            <ol>\n                                <li>Problem Definition</li>\n                                <li>Data Collection</li>\n                                <li>Data Preprocessing</li>\n                                <li>Model Selection</li>\n                                <li>Training</li>\n                                <li>Evaluation</li>\n                                <li>Deployment</li>\n                                <li>Monitoring</li>\n                            </ol>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>📊 Types of ML</h3>\n                            <div style=\"display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;\">\n                                <div style=\"padding: 1rem; background: var(--surface-light); border-radius: 8px;\">\n                                    <h4>🎯 Supervised</h4>\n                                    <p>Labeled data (X, y)</p>\n                                    <p>Classification, Regression</p>\n                                </div>\n                                <div style=\"padding: 1rem; background: var(--surface-light); border-radius: 8px;\">\n                                    <h4>🔍 Unsupervised</h4>\n                                    <p>Unlabeled data (X)</p>\n                                    <p>Clustering, Dimensionality Reduction</p>\n                                </div>\n                                <div style=\"padding: 1rem; background: var(--surface-light); border-radius: 8px;\">\n                                    <h4>🤖 Reinforcement</h4>\n                                    <p>Learn from rewards</p>\n                                    <p>Q-Learning, DQN</p>\n                                </div>\n                            </div>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>📈 Train/Validation/Test Split</h3>\n                            <p><strong>Typical Split:</strong> 60-80% train, 10-20% validation, 10-20% test</p>\n                            <p><strong>Never:</strong> Evaluate on training data!</p>\n                        </div>\n                        \n                        <div class=\"lesson-section\">\n                            <h3>⚠️ Common Pitfalls</h3>\n                            <ul>\n                                <li><strong>Overfitting:</strong> High train accuracy, low test accuracy</li>\n                                <li><strong>Underfitting:</strong> Low accuracy on both</li>\n                                <li><strong>Data Leakage:</strong> Test info leaks into training</li>\n                            </ul>\n                        </div>\n                    ",
+  "concepts": [
+    "ML Definition",
+    "ML Workflow",
+    "Supervised Learning",
+    "Unsupervised Learning",
+    "Reinforcement Learning",
+    "Train/Test Split"
+  ],
+  "quiz": {
+    "id": "ml_intro_quiz",
+    "title": "ML Introduction Quiz",
+    "passingScore": 60,
+    "timeLimit": 420,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "What are the three main ML types?",
+        "options": [
+          {
+            "text": "Supervised, Unsupervised, Reinforcement",
+            "isCorrect": true
+          },
+          {
+            "text": "Classification, Regression, Clustering",
+            "isCorrect": false
+          },
+          {
+            "text": "Neural, Statistical, Genetic",
+            "isCorrect": false
+          },
+          {
+            "text": "Linear, Non-linear, Deep",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "The three main types are Supervised, Unsupervised, and Reinforcement Learning.",
+        "difficulty": 1,
+        "concept": "Types of ML"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Which split is used for final evaluation?",
+        "options": [
+          {
+            "text": "Training set",
+            "isCorrect": false
+          },
+          {
+            "text": "Validation set",
+            "isCorrect": false
+          },
+          {
+            "text": "Test set",
+            "isCorrect": true
+          },
+          {
+            "text": "All of the above",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "The test set is used for final evaluation and should never be used in training or hyperparameter tuning.",
+        "difficulty": 2,
+        "concept": "Train/Test Split"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "Your model is 99% accurate on training data and 60% on test data. What is this called?",
+        "options": [
+          {
+            "text": "Overfitting - the model memorized the training data and doesn't generalize",
+            "isCorrect": true
+          },
+          {
+            "text": "Underfitting - the model is too simple",
+            "isCorrect": false
+          },
+          {
+            "text": "Data leakage - test info leaked into training",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing - 99% training accuracy is fine",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "A large gap between training and test accuracy is overfitting. The model fits training-specific noise rather than general patterns.",
+        "difficulty": 2,
+        "concept": "Overfitting"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Your test configuration accidentally preprocessed the test set using statistics computed on it. Why is this bad?",
+        "options": [
+          {
+            "text": "It's data leakage - test info leaks into training; the model may overestimate its real performance",
+            "isCorrect": true
+          },
+          {
+            "text": "It speeds up training",
+            "isCorrect": false
+          },
+          {
+            "text": "It's fine because the test set is large enough",
+            "isCorrect": false
+          },
+          {
+            "text": "It only matters for unsupervised learning",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Data leakage lets test-set information influence training decisions, inflating reported accuracy and giving false confidence.",
+        "difficulty": 2,
+        "concept": "Data Leakage"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Which is the most common first step when a trained model performs poorly on the test set?",
+        "options": [
+          {
+            "text": "Diagnose over vs underfitting first; the fix depends on which one it is",
+            "isCorrect": true
+          },
+          {
+            "text": "Always collect more data",
+            "isCorrect": false
+          },
+          {
+            "text": "Always add more layers",
+            "isCorrect": false
+          },
+          {
+            "text": "Always lower the learning rate",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Diagnosis first: overfit -> regularize / early stop / more data; underfit -> bigger model / fewer regularizers / more features. Different problems, different fixes.",
+        "difficulty": 3,
+        "concept": "ML Workflow"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "ML Workflow Simulator",
+    "description": "Visualize the complete ML workflow",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "id": "practical_tensorflow",
+  "title": "Hands-on TensorFlow",
+  "subtitle": "Deep Learning with TensorFlow 2.x",
+  "level": "advanced",
+  "number": 8,
+  "estimatedTime": 75,
+  "difficulty": 4,
+  "prerequisites": [
+    "practical_scikit"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>⚡ TensorFlow Overview</h3>\n                <p><strong>TensorFlow</strong> is Google's open-source deep learning framework.</p>\n                <ul>\n                    <li><strong>Key Features:</strong> Automatic differentiation, GPU acceleration, distributed training</li>\n                    <li><strong>Keras Integration:</strong> High-level API for easy model building</li>\n                    <li><strong>TensorBoard:</strong> Visualization toolkit</li>\n                    <li><strong>TF Hub:</strong> Pre-trained models and modules</li>\n                </ul>\n                <p><strong>Installation:</strong></p>\n                <pre style=\"background: var(--code-bg); padding: 1rem; border-radius: 4px;\">pip install \"tensorflow>=2.16\" \"tensorflow-datasets>=4.9\"</pre>\n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>🎯 Basic Neural Network</h3>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-2\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>TensorFlow: Simple Neural Network</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-2')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-2')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nimport tensorflow as tf\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.layers import Dense\n\n# Create a simple neural network\nmodel = Sequential([\n    Dense(128, activation='relu', input_shape=(10,)),\n    Dense(64, activation='relu'),\n    Dense(1, activation='sigmoid')\n])\n\n# Compile\nmodel.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n\n# Train (with dummy data)\nimport numpy as np\nX_train = np.random.random((100, 10))\ny_train = np.random.randint(0, 2, 100)\n\nmodel.fit(X_train, y_train, epochs=5, batch_size=16)\n\n# Evaluate\nloss, accuracy = model.evaluate(X_train, y_train)\nprint(f\"Test accuracy: {accuracy:.2f}\")\n            </code></pre>\n                <div id=\"cb-2\" class=\"code-source\" style=\"display:none;\">\nimport tensorflow as tf\nfrom tensorflow.keras.models import Sequential\nfrom tensorflow.keras.layers import Dense\n\n# Create a simple neural network\nmodel = Sequential([\n    Dense(128, activation='relu', input_shape=(10,)),\n    Dense(64, activation='relu'),\n    Dense(1, activation='sigmoid')\n])\n\n# Compile\nmodel.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n\n# Train (with dummy data)\nimport numpy as np\nX_train = np.random.random((100, 10))\ny_train = np.random.randint(0, 2, 100)\n\nmodel.fit(X_train, y_train, epochs=5, batch_size=16)\n\n# Evaluate\nloss, accuracy = model.evaluate(X_train, y_train)\nprint(f\"Test accuracy: {accuracy:.2f}\")\n            </div>\n            </div>\n        \n                <p><strong>Key Components:</strong> Sequential model, Dense layers, activation functions</p>\n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>📊 Image Classification with CNN</h3>\n                <p><strong>Convolutional Neural Network for MNIST:</strong></p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-25\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>CNN for MNIST Classification</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-25')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-25')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\nfrom tensorflow.keras.datasets import mnist\n\n# Load data\n(x_train, y_train), (x_test, y_test) = mnist.load_data()\nx_train, x_test = x_train / 255.0, x_test / 255.0  # Normalize\n\n# Add channel dimension\nx_train = x_train.reshape((-1, 28, 28, 1))\nx_test = x_test.reshape((-1, 28, 28, 1))\n\n# Build CNN model\nmodel = models.Sequential([\n    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),\n    layers.MaxPooling2D((2, 2)),\n    layers.Conv2D(64, (3, 3), activation='relu'),\n    layers.MaxPooling2D((2, 2)),\n    layers.Conv2D(64, (3, 3), activation='relu'),\n    layers.Flatten(),\n    layers.Dense(64, activation='relu'),\n    layers.Dense(10, activation='softmax')\n])\n\n# Compile\nmodel.compile(optimizer='adam',\n              loss='sparse_categorical_crossentropy',\n              metrics=['accuracy'])\n\n# Train\nmodel.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))\n\n# Evaluate\ntest_loss, test_acc = model.evaluate(x_test, y_test)\nprint(f\"Test Accuracy: {test_acc:.4f}\")\n            </code></pre>\n                <div id=\"cb-25\" class=\"code-source\" style=\"display:none;\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\nfrom tensorflow.keras.datasets import mnist\n\n# Load data\n(x_train, y_train), (x_test, y_test) = mnist.load_data()\nx_train, x_test = x_train / 255.0, x_test / 255.0  # Normalize\n\n# Add channel dimension\nx_train = x_train.reshape((-1, 28, 28, 1))\nx_test = x_test.reshape((-1, 28, 28, 1))\n\n# Build CNN model\nmodel = models.Sequential([\n    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),\n    layers.MaxPooling2D((2, 2)),\n    layers.Conv2D(64, (3, 3), activation='relu'),\n    layers.MaxPooling2D((2, 2)),\n    layers.Conv2D(64, (3, 3), activation='relu'),\n    layers.Flatten(),\n    layers.Dense(64, activation='relu'),\n    layers.Dense(10, activation='softmax')\n])\n\n# Compile\nmodel.compile(optimizer='adam',\n              loss='sparse_categorical_crossentropy',\n              metrics=['accuracy'])\n\n# Train\nmodel.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))\n\n# Evaluate\ntest_loss, test_acc = model.evaluate(x_test, y_test)\nprint(f\"Test Accuracy: {test_acc:.4f}\")\n            </div>\n            </div>\n        \n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>🎯 Practical Exercise: Text Classification</h3>\n                <p>IMDB Movie Review Sentiment Analysis:</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-26\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>Text Classification with TensorFlow</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-26')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-26')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\nfrom tensorflow.keras.datasets import imdb\n\n# Load data\nvocab_size = 10000\nmax_length = 200\n(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size)\n\n# Pad sequences\nx_train = tf.keras.preprocessing.sequence.pad_sequences(\n    x_train, maxlen=max_length)\nx_test = tf.keras.preprocessing.sequence.pad_sequences(\n    x_test, maxlen=max_length)\n\n# Build model\nmodel = models.Sequential([\n    layers.Embedding(vocab_size, 16, input_length=max_length),\n    layers.GlobalAveragePooling1D(),\n    layers.Dense(16, activation='relu'),\n    layers.Dense(1, activation='sigmoid')\n])\n\n# Compile\nmodel.compile(optimizer='adam',\n              loss='binary_crossentropy',\n              metrics=['accuracy'])\n\n# Train\nmodel.fit(x_train, y_train, epochs=5, batch_size=512, validation_data=(x_test, y_test))\n\n# Evaluate\ntest_loss, test_acc = model.evaluate(x_test, y_test)\nprint(f\"Test Accuracy: {test_acc:.4f}\")\n            </code></pre>\n                <div id=\"cb-26\" class=\"code-source\" style=\"display:none;\">\nimport tensorflow as tf\nfrom tensorflow.keras import layers, models\nfrom tensorflow.keras.datasets import imdb\n\n# Load data\nvocab_size = 10000\nmax_length = 200\n(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=vocab_size)\n\n# Pad sequences\nx_train = tf.keras.preprocessing.sequence.pad_sequences(\n    x_train, maxlen=max_length)\nx_test = tf.keras.preprocessing.sequence.pad_sequences(\n    x_test, maxlen=max_length)\n\n# Build model\nmodel = models.Sequential([\n    layers.Embedding(vocab_size, 16, input_length=max_length),\n    layers.GlobalAveragePooling1D(),\n    layers.Dense(16, activation='relu'),\n    layers.Dense(1, activation='sigmoid')\n])\n\n# Compile\nmodel.compile(optimizer='adam',\n              loss='binary_crossentropy',\n              metrics=['accuracy'])\n\n# Train\nmodel.fit(x_train, y_train, epochs=5, batch_size=512, validation_data=(x_test, y_test))\n\n# Evaluate\ntest_loss, test_acc = model.evaluate(x_test, y_test)\nprint(f\"Test Accuracy: {test_acc:.4f}\")\n            </div>\n            </div>\n        \n            </div>\n            \n            <div class=\"lesson-section\">\n                <h3>💡 TensorBoard Visualization</h3>\n                <p><strong>Setup:</strong></p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-27\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>TensorBoard Setup</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-27')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-27')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# Add callback\ntensorboard_callback = tf.keras.callbacks.TensorBoard(\n    log_dir='./logs',\n    histogram_freq=1\n)\n\n# Add to model.fit\nmodel.fit(x_train, y_train, epochs=5,\n          validation_data=(x_test, y_test),\n          callbacks=[tensorboard_callback])\n\n# Run TensorBoard\n# tensorboard --logdir=./logs\n            </code></pre>\n                <div id=\"cb-27\" class=\"code-source\" style=\"display:none;\">\n# Add callback\ntensorboard_callback = tf.keras.callbacks.TensorBoard(\n    log_dir='./logs',\n    histogram_freq=1\n)\n\n# Add to model.fit\nmodel.fit(x_train, y_train, epochs=5,\n          validation_data=(x_test, y_test),\n          callbacks=[tensorboard_callback])\n\n# Run TensorBoard\n# tensorboard --logdir=./logs\n            </div>\n            </div>\n        \n                <p><strong>Visualizations:</strong> Scalars, Graphs, Histograms, Projections, Images</p>\n            </div>\n        ",
+  "concepts": [
+    "TensorFlow",
+    "Neural Networks",
+    "CNN",
+    "Text Classification",
+    "TensorBoard"
+  ],
+  "quiz": {
+    "id": "practical_tensorflow_quiz",
+    "title": "TensorFlow Practical Quiz",
+    "passingScore": 60,
+    "timeLimit": 720,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "What is the high-level API for building models in TensorFlow?",
+        "options": [
+          {
+            "text": "Keras (tf.keras) - the high-level API integrated into TensorFlow",
+            "isCorrect": true
+          },
+          {
+            "text": "Estimator (deprecated; not recommended for new code)",
+            "isCorrect": false
+          },
+          {
+            "text": "Layers (this is a sub-module, not a top-level API)",
+            "isCorrect": false
+          },
+          {
+            "text": "Models (just a container, not an API)",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Keras (tf.keras) is the recommended high-level API. Estimators are deprecated for new code.",
+        "difficulty": 1,
+        "concept": "TensorFlow"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "Which layer type is the primary building block for image classification CNNs?",
+        "options": [
+          {
+            "text": "Conv2D (2D convolution)",
+            "isCorrect": true
+          },
+          {
+            "text": "Dense (useful at the head, but not the core of CNNs)",
+            "isCorrect": false
+          },
+          {
+            "text": "LSTM (for sequences, not images)",
+            "isCorrect": false
+          },
+          {
+            "text": "Embedding (for tokens, not pixels)",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Conv2D layers learn local spatial patterns (edges, textures, parts). Dense layers come at the head for classification.",
+        "difficulty": 2,
+        "concept": "CNN"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "Your MNIST CNN trains to 99% val accuracy in 1 epoch but val loss spikes on epoch 2. What's the likely cause and a cheap fix?",
+        "options": [
+          {
+            "text": "Overfitting + LR too high; lower LR, add dropout, add early stopping",
+            "isCorrect": true
+          },
+          {
+            "text": "Underfitting; add more epochs",
+            "isCorrect": false
+          },
+          {
+            "text": "A bug in MNIST; switch to a different dataset",
+            "isCorrect": false
+          },
+          {
+            "text": "Insufficient data; collect more digits",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Early high accuracy with later loss spike signals overfitting + a too-high LR. Lower LR, dropout, and early stopping are the standard fixes.",
+        "difficulty": 3,
+        "concept": "Neural Networks"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "For an imbalanced binary text classification problem, which loss is most appropriate?",
+        "options": [
+          {
+            "text": "binary_crossentropy with class_weight to handle imbalance",
+            "isCorrect": true
+          },
+          {
+            "text": "sparse_categorical_crossentropy (multi-class, not binary)",
+            "isCorrect": false
+          },
+          {
+            "text": "MSE (regression loss, wrong for classification)",
+            "isCorrect": false
+          },
+          {
+            "text": "No loss; just measure accuracy",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "binary_crossentropy is the correct loss for binary classification. Use class_weight parameter to handle class imbalance - accuracy alone hides minority-class failures.",
+        "difficulty": 2,
+        "concept": "Text Classification"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "What does TensorBoard primarily help with in a TensorFlow project?",
+        "options": [
+          {
+            "text": "Visualizing training curves, model graphs, weight histograms, and embeddings - useful for debugging and tuning",
+            "isCorrect": true
+          },
+          {
+            "text": "Speeding up training",
+            "isCorrect": false
+          },
+          {
+            "text": "Deploying a model to production",
+            "isCorrect": false
+          },
+          {
+            "text": "Generating training data",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "TensorBoard is a visualization toolkit: scalars (loss/acc), graphs, histograms, projector for embeddings. It surfaces problems a glance at a log never would.",
+        "difficulty": 1,
+        "concept": "TensorBoard"
+      }
+    ]
+  },
+  "animation": {
+    "type": "nn-visualizer",
+    "title": "TensorFlow Neural Network Builder",
+    "description": "Build and train neural networks with TensorFlow.",
+    "controls": [
+      "addLayer",
+      "changeActivation",
+      "train"
+    ]
+  }
+}

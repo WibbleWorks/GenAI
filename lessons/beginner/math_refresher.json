@@ -1,0 +1,173 @@
+{
+  "id": "math_refresher",
+  "title": "Math Refresher",
+  "subtitle": "Linear Algebra, Calculus & Probability for ML (Optional)",
+  "level": "beginner",
+  "number": 5,
+  "estimatedTime": 60,
+  "difficulty": 1,
+  "prerequisites": [],
+  "content": "\n                        <div class=\"lesson-section\">\n                            <h3>🎯 What You'll Be Able to Do</h3>\n                            <ul>\n                                <li>Read the math in deep-learning and quantum-ML lessons without panic</li>\n                                <li>Understand vectors, matrices, dot products, and why they matter for ML</li>\n                                <li>Understand derivatives as \"how much the output moves when an input moves\"</li>\n                                <li>Understand probability distributions, expectation, and variance</li>\n                            </ul>\n                            <p><strong>Before you start:</strong> High-school algebra. This lesson is <em>optional</em> - skip it if you already know what a derivative and a covariance matrix are.</p>\n                            <div style=\"background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ai-green); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;\">\n                                <strong>How to use this lesson:</strong> skim each section, and only stop where a concept is unfamiliar. You don't need to memorize formulas - you need to recognize what they represent.\n                            </div>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>📐 Linear Algebra — Vectors and Matrices</h3>\n                            <p><strong>Vector</strong> — an ordered list of numbers, e.g. <code>x = [1.2, -0.4, 3.0]</code> in <strong>R^3</strong>. Geometrically: a point or a direction in space.</p>\n                            <p><strong>Matrix</strong> — a 2D grid of numbers. A matrix <strong>A</strong> (m x n) maps an n-vector to an m-vector via <strong>Ax</strong>.</p>\n                            <p><strong>Dot product</strong>: <code>a . b = sum(a_i * b_i)</code>. It's the building block of neural layers (<code>w . x + b</code>) and similarity (cosine similarity).</p>\n                            <p><strong>Matrix multiplication</strong>: composition. If <strong>B</strong> maps <em>n</em>-vectors to <em>m</em>-vectors and <strong>A</strong> maps <em>m</em>-vectors to <em>k</em>-vectors, then <strong>A(Bx)</strong> = <strong>(AB)x</strong> is a k-vector.</p>\n                            <p><strong>Eigenvalues / eigenvectors</strong>: the directions <em>v</em> that don't rotate under <strong>A</strong>, only scale: <strong>Av = lambda * v</strong>. Intuition: special directions where the matrix acts like a single number.</p>\n                            <p><strong>Why this matters for ML:</strong> a neural network layer <code>y = Wx + b</code> is a matrix-vector product plus a bias. Backpropagation is purely matrix calculus.</p>\n                            <pre style=\"background: var(--code-bg); padding: 1rem; border-radius: 4px; overflow-x: auto;\">\n# NumPy: the lingua franca of ML math\nimport numpy as np\nv = np.array([1.2, -0.4, 3.0])  # a vector in R^3\nM = np.array([[1, 2, 0], [0, 1, 4]])  # 2x3 matrix\ny = M @ v  # y in R^2\nprint(y, y.shape)  # [1.2, 11.6] (2,)\nprint(v @ v)  # dot product\n                            </pre>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>📉 Calculus — Derivatives and Gradients</h3>\n                            <p><strong>Derivative</strong> — <code>df/dx</code> is \"how much the output moves when <code>x</code> moves\". <code>f(x) = x^2</code> -> <code>df/dx = 2x</code> (at x=3, slope is 6).</p>\n                            <p><strong>Partial derivative</strong> — derivative of <code>f(x_1, ..., x_n)</code> w.r.t. one variable, holding others fixed. Written <code>partial f / partial x_i</code>.</p>\n                            <p><strong>Gradient</strong> — vector of all partials. <code>grad f = [df/dx_1, ..., df/dx_n]</code>. It points in the direction of steepest ascent.</p>\n                            <p><strong>Training loop in one line</strong>: <code>w = w - lr * grad L</code> — go downhill, where <code>lr</code> (learning rate) is the step size. That's gradient descent.</p>\n                            <p><strong>Chain rule</strong>: <code>d f(g(x)) / dx = (df/dg) * (dg/dx)</code>. Backprop is just the chain rule applied layer-by-layer.</p>\n                            <p><strong>Why this matters for ML:</strong> training = minimizing a loss function. We use gradients to know which direction is downhill.</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🎲 Probability — Distributions, Expectation, Variance</h3>\n                            <p><strong>Random variable (RV)</strong> — a variable whose value is uncertain. Can be discrete (coin toss) or continuous (height).</p>\n                            <p><strong>Probability distribution</strong>: how likely each value is.\n                                <ul>\n                                    <li><strong>Discrete:</strong> probability mass function <code>p(x)</code> = P(X=x).</li>\n                                    <li><strong>Continuous:</strong> probability density function <code>p(x)</code>; the area under <code>p</code> is 1.</li>\n                                </ul>\n                            </p>\n                            <p><strong>Expectation</strong> <code>E[X] = sum x * p(x)</code> (or integral for continuous). The long-run average.</p>\n                            <p><strong>Variance</strong> <code>Var(X) = E[(X - E[X])^2]</code> — how spread out the values are.</p>\n                            <p><strong>Conditional probability</strong> <code>P(A | B)</code> = P(A and B) / P(B). Bayes' rule flips conditions: <code>P(A|B) = P(B|A) P(A) / P(B)</code>.</p>\n                            <p><strong>Why this matters for ML:</strong> classification is \"estimate P(class | input)\". Generative models (LLMs) model P(token | previous tokens). Across the whole course you'll see <code>softmax(x)_i = exp(x_i) / sum_j exp(x_j)</code> — a probability distribution over classes/tokens.</p>\n                        </div>\n\n                        <div class=\"lesson-section\">\n                            <h3>🧠 Tying it Together — softmax in One Line</h3>\n                            <p>One formula that uses everything above:</p>\n                            <pre style=\"background: var(--code-bg); padding: 1rem; border-radius: 4px;\">\nsoftmax(z)_i = exp(z_i) / sum_j exp(z_j)\n                            </pre>\n                            <ul>\n                                <li>Takes a vector <code>z</code> (linear algebra)</li>\n                                <li>Its derivative is clean (calculus: <code>d softmax/dz = softmax - softmax * softmax</code>)</li>\n                                <li>Outputs a probability distribution that sums to 1 (probability)</li>\n                            </ul>\n                            <p>Softmax is the output layer for classification; cross-entropy loss is the matching training objective. Together they make neural-network classifier training work.</p>\n                        </div>\n                    ",
+  "concepts": [
+    "Vectors",
+    "Matrices",
+    "Dot product",
+    "Matrix multiplication",
+    "Eigenvalues",
+    "Derivatives",
+    "Gradients",
+    "Gradient descent",
+    "Probability distributions",
+    "Expectation",
+    "Variance",
+    "Conditional probability",
+    "softmax"
+  ],
+  "quiz": {
+    "id": "math_refresher_quiz",
+    "title": "Math Refresher Quiz",
+    "passingScore": 60,
+    "timeLimit": 420,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "A neural network layer computes y = Wx + b. In shape terms, if x is in R^n and y is in R^m, what is W?",
+        "options": [
+          {
+            "text": "An m x n matrix (it maps an n-vector to an m-vector)",
+            "isCorrect": true
+          },
+          {
+            "text": "An n x m matrix",
+            "isCorrect": false
+          },
+          {
+            "text": "A scalar",
+            "isCorrect": false
+          },
+          {
+            "text": "A vector of length m+n",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Ax maps n-vectors to m-vectors only when A has m rows and n columns. The bias b is added elementwise after, so it's also in R^m.",
+        "difficulty": 1,
+        "concept": "Linear algebra"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "The gradient grad L points in the direction of steepest ascent of L. Why do we train with w = w - lr * grad L?",
+        "options": [
+          {
+            "text": "The minus sign flips the direction, so we move downhill (steapest descent), minimizing L",
+            "isCorrect": true
+          },
+          {
+            "text": "We want to maximize L, and the minus sign is a bug",
+            "isCorrect": false
+          },
+          {
+            "text": "lr is the gradient itself",
+            "isCorrect": false
+          },
+          {
+            "text": "It doesn't - we use plus, not minus",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Gradient descent moves opposite the gradient (downhill) by step size lr. Gradient ascent uses plus.",
+        "difficulty": 2,
+        "concept": "Calculus"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "EF[X] = sum x*p(x). What does expectation represent intuitively?",
+        "options": [
+          {
+            "text": "The long-run average value of X",
+            "isCorrect": true
+          },
+          {
+            "text": "The most likely value of X",
+            "isCorrect": false
+          },
+          {
+            "text": "The maximum value of X",
+            "isCorrect": false
+          },
+          {
+            "text": "The variance of X",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Expectation is the long-run average. The most likely value (mode) and the maximum are different things and may not equal E[X].",
+        "difficulty": 1,
+        "concept": "Probability"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Backpropagation is essentially which math tool applied repeatedly?",
+        "options": [
+          {
+            "text": "The chain rule of calculus",
+            "isCorrect": true
+          },
+          {
+            "text": "Euler's formula",
+            "isCorrect": false
+          },
+          {
+            "text": "Taylor series",
+            "isCorrect": false
+          },
+          {
+            "text": "Kronecker products",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Backprop is the chain rule applied layer-by-layer to compute gradients of the loss w.r.t. every weight.",
+        "difficulty": 2,
+        "concept": "Calculus"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "softmax(z)_i = exp(z_i) / sum_j exp(z_j). Why does the denominator sum over all j?",
+        "options": [
+          {
+            "text": "So the output is a probability distribution that sums to 1",
+            "isCorrect": true
+          },
+          {
+            "text": "To make softmax faster",
+            "isCorrect": false
+          },
+          {
+            "text": "To avoid a division-by-zero error on diagonal elements",
+            "isCorrect": false
+          },
+          {
+            "text": "To preserve the input scale",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "The denominator normalizes the exponentiated scores so the output sums to 1, making it valid as a categorical probability.",
+        "difficulty": 2,
+        "concept": "Probability"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "Math Concepts Map",
+    "description": "Walk the math concepts used across the course.",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  }
+}

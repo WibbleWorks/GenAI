@@ -1,0 +1,171 @@
+{
+  "id": "llm_evaluation",
+  "title": "LLM Evaluation",
+  "subtitle": "Measuring LLM Systems Responsibly",
+  "level": "expert",
+  "number": 15,
+  "estimatedTime": 60,
+  "difficulty": 4,
+  "prerequisites": [
+    "prompt_engineering",
+    "ai_ethics"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Explain why accuracy alone is the wrong metric for LLMs</li>\n                    <li>Choose between benchmarks, human eval, and LLM-as-judge</li>\n                    <li>Measure hallucination rate on your own corpus</li>\n                    <li>Evaluate a RAG system end-to-end</li>\n                    <li>Detect production drift</li>\n                </ul>\n                <p><strong>Before you start:</strong> Complete Lesson 4 (Responsible AI & Ethics) and Lesson 9 (Prompt Engineering). You should know why aggregate-accuracy hides per-group failures, and how to constrain model output.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🚫 Why Accuracy Isn't Enough</h3>\n                <p>For a classifier, accuracy = correct / total. For an LLM:</p>\n                <ul>\n                    <li>The \"right answer\" is often subjective or open-ended.</li>\n                    <li>A long answer can be partly right and partly hallucinated.</li>\n                    <li>The same prompt can have multiple correct outputs.</li>\n                    <li>Models can be confidently wrong or correctly uncertain.</li>\n                </ul>\n                <p>You need multiple measurements, each capturing one axis: correctness, faithfulness, relevance, safety, calibration.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🏁 Benchmarks</h3>\n                <p>Standard suites measure general capabilities but don't predict your use case:</p>\n                <ul>\n                    <li><strong>MMLU</strong> - multi-task knowledge (57 subjects).</li>\n                    <li><strong>HELM</strong> (Stanford) - holistic eval across many tasks and metrics.</li>\n                    <li><strong>MT-Bench / AlpacaEval</strong> - multi-turn instruction following; partly LLM-graded.</li>\n                    <li><strong>Chatbot Arena</strong> - human pairwise preference; an Elo leaderboard.</li>\n                </ul>\n                <p><strong>Use benchmarks as a sanity check, not as your evaluation.</strong> Your real eval is on your own data.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🧑 Human Evaluation</h3>\n                <ul>\n                    <li><strong>Pairwise preference</strong>: which response is better, A or B? (Cheap; used by Chatbot Arena.)</li>\n                    <li><strong>Rubric scoring</strong>: rate 1-5 on each axis (helpfulness, correctness, safety). More work but more informative.</li>\n                    <li><strong>Side-by-side with criteria</strong>: A wins/tie/B on criterion X. Best for evaluating fine-tunes against a baseline.</li>\n                </ul>\n                <p><strong>Pitfall:</strong> human raters disagree. Use ≥3 raters, report inter-annotator agreement (e.g., Krippendorff's alpha), and resolve ties with a documented rule.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🤖 LLM-as-Judge</h3>\n                <p>Use a strong LLM (GPT-4, Claude 3.5, etc.) to grade outputs of the model you're testing. Cheap, scalable, and correlates surprisingly well with humans - but has biases:</p>\n                <ul>\n                    <li><strong>Self-preference:</strong> judges prefer outputs in their own style.</li>\n                    <li><strong>Position bias:</strong> judges prefer the first option in pairwise.</li>\n                    <li><strong>Verbosity bias:</strong> judges prefer longer answers.</li>\n                </ul>\n                <p>Mitigations: rotate position, normalize length, use multiple judges, and <strong>calibrate against a small human-graded set</strong>.</p>\n                \n            <div class=\"code-example\" style=\"margin: 1rem 0; border-left: 4px solid var(--ai-purple);\" data-code-id=\"cb-43\">\n                <div class=\"code-caption\" style=\"background: var(--surface-light); padding: 0.5rem; border-radius: 4px 4px 0 0; font-size: 0.875rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;\">\n                    <span>LLM-as-judge with position rotation</span>\n                    <span style=\"display: flex; gap: 0.25rem;\">\n                        <button class=\"btn-small\" onclick=\"aiLabCopy('cb-43')\" aria-label=\"Copy code\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--surface-color); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;\">📋 Copy</button>\n                        <button class=\"btn-small\" onclick=\"aiLabOpenInColab('cb-43')\" aria-label=\"Open in Colab\" style=\"padding: 0.15rem 0.4rem; font-size: 0.75rem; background: var(--ai-orange); color: var(--text-inverse); border: none; border-radius: 4px; cursor: pointer;\">☁️ Open in Colab</button>\n                    </span>\n                </div>\n                <pre style=\"margin: 0; padding: 1rem; background: var(--code-bg); border-radius: 0 4px 4px 0; overflow-x: auto; font-size: 0.875rem;\"><code class=\"language-python\">\n# A minimal LLM-as-judge with position rotation\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.output_parsers import StrOutputParser\n\njudge = ChatOpenAI(model=\"gpt-4o\", temperature=0)\n\ndef evaluate_pair(question, a, b, criterion=\"helpfulness\"):\n    # Randomize order so position bias averages out\n    import random\n    if random.random() &lt; 0.5:\n        first, second, label = a, b, \"A\"\n    else:\n        first, second, label = b, a, \"B\"\n    prompt = ChatPromptTemplate.from_messages([\n        (\"system\", f\"You are a strict judge. Pick the better response for {criterion}. Reply with only A or B.\"),\n        (\"human\",\n         \"Question: {q}\\n\\nResponse A:\\n{a}\\n\\nResponse B:\\n{b}\\n\\nBetter response (A or B):\")\n    ])\n    chain = prompt | judge | StrOutputParser()\n    verdict = chain.invoke({\"q\": question, \"a\": first, \"b\": second}).strip()\n    # Map judge's verdict back to original labels\n    return \"A\" if verdict.startswith(label) else \"B\"\n            </code></pre>\n                <div id=\"cb-43\" class=\"code-source\" style=\"display:none;\">\n# A minimal LLM-as-judge with position rotation\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.output_parsers import StrOutputParser\n\njudge = ChatOpenAI(model=\"gpt-4o\", temperature=0)\n\ndef evaluate_pair(question, a, b, criterion=\"helpfulness\"):\n    # Randomize order so position bias averages out\n    import random\n    if random.random() &lt; 0.5:\n        first, second, label = a, b, \"A\"\n    else:\n        first, second, label = b, a, \"B\"\n    prompt = ChatPromptTemplate.from_messages([\n        (\"system\", f\"You are a strict judge. Pick the better response for {criterion}. Reply with only A or B.\"),\n        (\"human\",\n         \"Question: {q}\\n\\nResponse A:\\n{a}\\n\\nResponse B:\\n{b}\\n\\nBetter response (A or B):\")\n    ])\n    chain = prompt | judge | StrOutputParser()\n    verdict = chain.invoke({\"q\": question, \"a\": first, \"b\": second}).strip()\n    # Map judge's verdict back to original labels\n    return \"A\" if verdict.startswith(label) else \"B\"\n            </div>\n            </div>\n        \n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>👻 Hallucination Measurement</h3>\n                <p>Three angles:</p>\n                <ul>\n                    <li><strong>Faithfulness</strong>: every claim in the answer is supported by retrieved/grounding context. (Ragas, TruLens.)</li>\n                    <li><strong>Factual accuracy</strong>: every factual claim is verifiably true. Hard - requires a trusted source or human check.</li>\n                    <li><strong>Self-consistency</strong>: ask the same question N times at temperature > 0; high disagreement flags uncertainty.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📚 RAG-specific Metrics</h3>\n                <ul>\n                    <li><strong>Faithfulness</strong> - answer supported by context (no hallucinations)</li>\n                    <li><strong>Answer relevance</strong> - answer addresses the question</li>\n                    <li><strong>Context relevance</strong> - retrieved chunks were actually useful</li>\n                    <li><strong>Context precision/recall@k</strong> - did the right chunk get retrieved into the top-k?</li>\n                </ul>\n                <p>Use a labeled eval set with golden answers. <strong>Ragas</strong> (<code>pip install \"ragas&gt;=0.1\"</code>) computes these in one shot from a dataset of (question, answer, contexts, ground_truth).</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🛡️ Safety, Toxicity, Robustness</h3>\n                <ul>\n                    <li><strong>Toxicity classifiers</strong> (e.g., Perspective API, or local <code>Detoxify</code>) on outputs.</li>\n                    <li><strong>Adversarial prompts</strong>: red-team set including jailbreaks and prompt-injection attempts; measure failure rate.</li>\n                    <li><strong>Perturbation tests</strong>: paraphrase the input; does the answer stay consistent? Robustness.</li>\n                </ul>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>📉 Drift in Production</h3>\n                <p>Eval doesn't stop at launch. Track in production:</p>\n                <ul>\n                    <li><strong>Input drift</strong>: distribution of real prompts vs your eval set. When it diverges, your eval set no longer represents reality.</li>\n                    <li><strong>Output drift</strong>: response length, sentiment, refusal rate over time.</li>\n                    <li><strong>Online metrics</strong>: thumbs up/down, implicit signals (copy button, follow-up question), and reject rate.</li>\n                </ul>\n                <p>Re-run your offline eval set weekly against the current model, and against any new model before you cut over.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>✅ A Practical Eval Plan</h3>\n                <ol>\n                    <li>Build a golden set (50-200 curated examples with expected answers or rubrics).</li>\n                    <li>Run automated metrics (faithfulness, relevance) on every model change.</li>\n                    <li>Human-review a sample (20-50) on every release.</li>\n                    <li>Run an adversarial/red-team set monthly.</li>\n                    <li>Track input and output drift online.</li>\n                </ol>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>💻 Try It Yourself</h3>\n                <div class=\"interactive-lab-mount\" data-mount=\"lab\"></div>\n            </div>\n        ",
+  "concepts": [
+    "LLM evaluation",
+    "Benchmarks",
+    "Human eval",
+    "LLM-as-judge",
+    "Hallucination",
+    "RAG metrics",
+    "Safety",
+    "Drift"
+  ],
+  "quiz": {
+    "id": "llm_evaluation_quiz",
+    "title": "LLM Evaluation Quiz",
+    "passingScore": 60,
+    "timeLimit": 480,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "Why is plain accuracy a poor metric for an open-ended LLM task?",
+        "options": [
+          {
+            "text": "Long answers can be partly right and partly hallucinated, and 'correct' is often subjective",
+            "isCorrect": true
+          },
+          {
+            "text": "Accuracy is undefined for LLMs",
+            "isCorrect": false
+          },
+          {
+            "text": "LLMs are always 100% accurate so accuracy never varies",
+            "isCorrect": false
+          },
+          {
+            "text": "Accuracy only works for images",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Open-ended outputs can be partly correct and partly wrong. 'Correctness' needs to be decomposed into faithfulness, relevance, safety, etc.",
+        "difficulty": 1,
+        "concept": "Why accuracy isn't enough"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "What is a known bias of LLM-as-judge and how do you mitigate it?",
+        "options": [
+          {
+            "text": "Position bias (prefers the first option); mitigate by rotating order and using multiple judges",
+            "isCorrect": true
+          },
+          {
+            "text": "Color bias; mitigate by switching fonts",
+            "isCorrect": false
+          },
+          {
+            "text": "No biases; LLMs are neutral",
+            "isCorrect": false
+          },
+          {
+            "text": "Length bias toward short answers; mitigate with longer prompts",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Position, verbosity, and self-preference biases are well documented. Mitigate with position rotation, length normalization, multi-judge, and calibration against a human-graded set.",
+        "difficulty": 2,
+        "concept": "LLM-as-judge"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "A RAG system returns a confident answer citing facts not present in any retrieved chunk. Which metric did it fail?",
+        "options": [
+          {
+            "text": "Faithfulness (answer not supported by retrieved context)",
+            "isCorrect": true
+          },
+          {
+            "text": "Throughput",
+            "isCorrect": false
+          },
+          {
+            "text": "Context precision",
+            "isCorrect": false
+          },
+          {
+            "text": "Latency",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Faithfulness checks that every claim in the answer is supported by retrieved context. A claim outside the context fails it.",
+        "difficulty": 2,
+        "concept": "RAG metrics"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "Your eval set was built in January. By July, real users ask very different questions. What's happening and what do you do?",
+        "options": [
+          {
+            "text": "Input drift; refresh the eval set with current queries and re-baseline",
+            "isCorrect": true
+          },
+          {
+            "text": "Output drift; just retrain the model",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing - eval sets are valid forever",
+            "isCorrect": false
+          },
+          {
+            "text": "Latency regression; restart the server",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Input drift means real queries no longer match your eval set, so your eval no longer predicts reality. Refresh the eval set with a sample of current queries.",
+        "difficulty": 2,
+        "concept": "Drift"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "Which is the cheapest reasonable cadence for running your offline eval set?",
+        "options": [
+          {
+            "text": "Weekly against current model + on every model change before cutover",
+            "isCorrect": true
+          },
+          {
+            "text": "Once, at initial launch, and never again",
+            "isCorrect": false
+          },
+          {
+            "text": "Every request (every single inference)",
+            "isCorrect": false
+          },
+          {
+            "text": "Every 5 years",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Weekly catches silent regressions (e.g., from upstream provider changes). Run on every model change before cutover to prevent shipping a regression.",
+        "difficulty": 1,
+        "concept": "Drift"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "Eval Loop",
+    "description": "Walk the eval loop: golden set -> automated metrics -> human review -> red-team -> drift monitoring.",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  }
+}
