@@ -934,6 +934,33 @@ print(f"Model Accuracy: {accuracy:.2f}")
                 output.innerHTML = '<span style="color: var(--ai-red);">Error:</span> ' + error.message;
             }
         }
+
+        // Run userCode with assertCode appended (P1 autograded labChecks).
+        // The assertCode must print LABCHECK_PASS as its last statement when
+        // every assert holds; any exception means FAIL. Returns PASS/FAIL.
+        async checkCode(userCode, assertCode) {
+            const combined = (userCode || '') + '\n\n# --- autograder asserts (do not edit) ---\n' + (assertCode || '');
+            if (this._usesUnsupported(combined)) {
+                return { success: false, mode: 'preview', output: 'This check needs a package Pyodide cannot run in-browser. Use Open in Colab.' };
+            }
+            const py = await this.loadPyodide();
+            if (!py) {
+                return { success: false, mode: 'preview', output: 'Pyodide runtime unavailable (offline?). Reconnect and retry, or use Open in Colab.' };
+            }
+            const out = { text: '' };
+            py.setStdout({ batched: (s) => { out.text += s; } });
+            py.setStderr({ batched: (s) => { out.text += s; } });
+            try {
+                await py.runPythonAsync(combined);
+                const text = (out.text || '');
+                if (text.includes('LABCHECK_PASS')) {
+                    return { success: true, mode: 'pyodide', output: '✓ PASS — ' + text.trim().split('\n').filter(l => l && l !== 'LABCHECK_PASS').join('\n') };
+                }
+                return { success: false, mode: 'pyodide-error', output: 'Check ran but did not print LABCHECK_PASS. An assert may have been deleted — restore the asserts section.' };
+            } catch (e) {
+                return { success: false, mode: 'pyodide-error', output: '✗ FAIL\n' + (e.message || e) };
+            }
+        }
     }
 
     window.aiLab = new AILab();
@@ -970,6 +997,8 @@ print(f"Model Accuracy: {accuracy:.2f}")
     }
 
     // Render a quantum cloud guide by key.
+    // P4: currently uncalled (sole caller was the quantum lesson, now in
+    // quantum-course/). Kept for the P5 loader; remove if still unused then.
     function renderQuantumCloudGuide(key) {
         const guide = QUANTUM_CLOUD_GUIDES[key];
         if (!guide) return '';
@@ -985,6 +1014,129 @@ print(f"Model Accuracy: {accuracy:.2f}")
             </div>
         `;
     }
+
+    // Render autograded labChecks into a lesson. Call from a lesson's content
+    // as ${renderLabChecks('lesson_id')} — the checks themselves are read from
+    // COURSE_DATA at mount time (P1), so content templates stay declarative.
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function renderLabChecks(lessonId) {
+        return `<div class="labchecks-mount" data-labchecks="${lessonId}"></div>`;
+    }
+
+    // After a lesson is rendered, resolve each [data-labchecks] placeholder
+    // against COURSE_DATA and inject the check cards. Called from main.js
+    // showLesson alongside mountInteractiveLabs.
+    window.mountLabChecks = function(container) {
+        const mounts = (container || document).querySelectorAll('[data-labchecks]');
+        mounts.forEach(mount => {
+            if (mount.dataset.mounted === '1') return;
+            const lessonId = mount.dataset.labchecks;
+            const lesson = window.course ? window.course.findLesson(lessonId) : null;
+            const checks = (lesson && lesson.labChecks) || [];
+            if (!checks.length) { mount.dataset.mounted = '1'; return; }
+            mount.innerHTML = `
+                <div class="lesson-section">
+                    <h3>🧪 Graded Checks (run in your browser)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Complete the TODO in each exercise and click <strong>Check</strong>. Passing is saved to your progress.</p>
+                    ${checks.map((c, i) => `
+                    <div class="labcheck" id="labcheck-${lessonId}-${c.id}" style="margin: 1rem 0; padding: 1rem; background: var(--surface-light); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <p style="margin-bottom: 0.5rem;"><strong>${i + 1}. ${escapeHtml(c.prompt.split('\n')[0])}</strong>
+                        <span class="labcheck-badge" style="font-size: 0.75rem; color: var(--text-muted);"></span></p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap;">${escapeHtml(c.prompt)}</p>
+                        ${(c.kind === 'pyodide-assert') ? `
+                        <textarea id="labcheck-code-${lessonId}-${c.id}" aria-label="Exercise code editor" style="width: 100%; height: 180px; padding: 0.75rem; font-family: monospace; font-size: 0.8rem; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; resize: vertical;">${escapeHtml(c.starterCode || '')}</textarea>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-small" onclick="runLabCheck('${lessonId}', '${c.id}')" aria-label="Run check" style="padding: 0.25rem 0.75rem;">▶ Check</button>
+                        </div>
+                        <div class="labcheck-output" style="margin-top: 0.5rem; padding: 0.75rem; background: var(--surface-color); border-radius: 4px; min-height: 2rem; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap;"><span style="color: var(--text-muted);">Result will appear here…</span></div>
+                        ` : `
+                        <p style="font-size: 0.85rem;">Kind <code>${escapeHtml(c.kind)}</code>: copy the starter into Colab, run the asserts there, and self-report. In-browser execution for this check lands with the P5 codeblocks CI.</p>
+                        ${(c.starterCode) ? `<pre style="padding: 0.75rem; background: var(--code-bg); border-radius: 4px; overflow-x: auto; font-size: 0.8rem;" tabindex="0" role="region" aria-label="Code block">${escapeHtml(c.starterCode)}</pre>` : ''}
+                        `}
+                    </div>`).join('')}
+                </div>`;
+            mount.dataset.mounted = '1';
+            // Restore PASS badges for already-passed checks
+            if (window.course && window.course.labChecksPassed && window.course.labChecksPassed[lessonId]) {
+                window.course.labChecksPassed[lessonId].forEach(cid => {
+                    const card = mount.querySelector(`#labcheck-${lessonId}-${cid} .labcheck-badge`);
+                    if (card) card.textContent = '✓ passed';
+                });
+            }
+        });
+    };
+
+    // Run a single pyodide-assert check from its card. Exposed for inline onclick.
+    window.runLabCheck = async function(lessonId, checkId) {
+        const lesson = window.course ? window.course.findLesson(lessonId) : null;
+        const check = lesson && lesson.labChecks ? lesson.labChecks.find(c => c.id === checkId) : null;
+        const card = document.getElementById(`labcheck-${lessonId}-${checkId}`);
+        const out = card ? card.querySelector('.labcheck-output') : null;
+        const editor = document.getElementById(`labcheck-code-${lessonId}-${checkId}`);
+        if (!check || !out || !editor) return;
+        out.innerHTML = '<span style="color: var(--ai-orange);">⏳ Running check (first run loads Pyodide)…</span>';
+        try {
+            const result = await window.aiLab.checkCode(editor.value, check.assertCode);
+            const color = result.success ? 'var(--ai-green)' : 'var(--ai-red)';
+            out.innerHTML = `<span style="color: ${color};">` + escapeHtml(result.output) + '</span>';
+            if (result.success && window.course) {
+                window.course.markLabCheckPassed(lessonId, checkId);
+                const badge = card.querySelector('.labcheck-badge');
+                if (badge) badge.textContent = '✓ passed';
+            }
+        } catch (e) {
+            out.innerHTML = '<span style="color: var(--ai-red);">Error: ' + escapeHtml(e.message || e) + '</span>';
+        }
+    };
+
+    // Portfolio submission widget (P2). ${renderCapstoneSubmit('rag-chatbot')}
+    // renders a placeholder; mountCapstoneSubmit injects the self-score form.
+    // Submissions persist via course.markCapstoneSubmitted and gate the
+    // completion badge (see main.js completeCourse).
+    function renderCapstoneSubmit(capstoneId) {
+        return `<div class="capstone-submit-mount" data-capstone-submit="${capstoneId}"></div>`;
+    }
+
+    window.mountCapstoneSubmit = function(container) {
+        const mounts = (container || document).querySelectorAll('[data-capstone-submit]');
+        mounts.forEach(mount => {
+            if (mount.dataset.mounted === '1') return;
+            const cid = mount.dataset.capstoneSubmit;
+            const sub = window.course && window.course.capstonesSubmitted ? window.course.capstonesSubmitted[cid] : null;
+            mount.innerHTML = `
+                <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                        ${sub ? `✓ Submitted: self-score ${escapeHtml(String(sub.selfScore))}/20 on ${escapeHtml(sub.date)}` : 'Not yet submitted. Finish SUBMISSION.md, then record your self-score (14/20 to pass, ≥3 every row).'}
+                    </p>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                        <input id="capstone-score-${cid}" type="number" min="0" max="20" placeholder="self-score /20" aria-label="Self score out of 20"
+                            style="width: 9rem; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-primary);">
+                        <input id="capstone-link-${cid}" type="text" placeholder="artifact link (repo/PR/folder)" aria-label="Artifact link"
+                            style="flex: 1; min-width: 12rem; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-primary);">
+                        <button class="btn-small" onclick="submitCapstone('${cid}')" style="padding: 0.4rem 0.75rem;">Submit</button>
+                    </div>
+                </div>`;
+            mount.dataset.mounted = '1';
+        });
+    };
+
+    window.submitCapstone = function(capstoneId) {
+        const scoreEl = document.getElementById(`capstone-score-${capstoneId}`);
+        const linkEl = document.getElementById(`capstone-link-${capstoneId}`);
+        const score = scoreEl ? parseInt(scoreEl.value, 10) : NaN;
+        const link = linkEl ? linkEl.value.trim() : '';
+        if (!Number.isInteger(score) || score < 0 || score > 20) {
+            alert('Enter an integer self-score 0-20.');
+            return;
+        }
+        if (!link) {
+            alert('Add an artifact link (repo, PR, or folder) so a reviewer can verify.');
+            return;
+        }
+        if (window.course) window.course.markCapstoneSubmitted(capstoneId, score, link);
+    };
 
     // After a lesson is rendered, find any .interactive-lab-mount placeholders
     // and inject the real lab HTML. Called from main.js showLesson.
@@ -1009,6 +1161,7 @@ print(f"Model Accuracy: {accuracy:.2f}")
         subtitle: "Classic Machine Learning with scikit-learn",
         level: "intermediate",
         number: 6,
+        tracks: { builder: "required", researcher: "optional", leader: "recommended" },
         estimatedTime: 75,
         difficulty: 3,
         prerequisites: ["neural_networks_intro"],
@@ -1186,6 +1339,7 @@ with open('titanic_model.pkl', 'rb') as f:
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('practical_scikit')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -1276,7 +1430,30 @@ with open('titanic_model.pkl', 'rb') as f:
             title: "scikit-learn Workflow",
             description: "Visualize the complete scikit-learn workflow.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "sklearn_stratified_split",
+                kind: "pyodide-assert",
+                prompt: "Fix the split: keep every class at 10 test samples\nThe starter splits iris 80/20 without stratify, so class shares drift. Add stratify=y (keep random_state=42) so each of the 3 classes keeps exactly 10 of the 30 test rows.",
+                starterCode: `from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+X, y = load_iris(return_X_y=True)
+# TODO: split 80/20 with random_state=42 AND stratify=y so every
+# class keeps exactly 10 test samples.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)`,
+                assertCode: `import numpy as np
+assert len(y_test) == 30, f"expected 30 test rows, got {len(y_test)}"
+counts = sorted(np.bincount(y_test, minlength=3).tolist())
+assert counts == [10, 10, 10], f"class counts in test are {counts}, want [10, 10, 10] — did you forget stratify=y?"
+print("stratified split keeps all 3 classes at 10/10/10")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
     
     // Intermediate Level (Level 2) -- Tier-1 content: MLOps basics
@@ -1291,6 +1468,7 @@ with open('titanic_model.pkl', 'rb') as f:
         subtitle: "From Notebook to Production",
         level: "intermediate",
         number: 7,
+        tracks: { builder: "required", researcher: "optional", leader: "required" },
         estimatedTime: 75,
         difficulty: 3,
         prerequisites: ["practical_scikit"],
@@ -1441,6 +1619,7 @@ def predict(p: Passenger):
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('mlops_basics')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -1519,9 +1698,64 @@ def predict(p: Passenger):
         animation: {
             type: "ml-workflow",
             title: "MLOps Loop",
-            description: "Walk the MLOps loop: train -> package -> deploy -> monitor -> retrain trigger.",
+            description: "Walk the MLOps loop: train -> package -> deploy -> monitor -> retrain -> redeploy.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P3 Manager-track labs (deferred T4.5/T4.6/T4.7). Verified discriminating.
+        labChecks: [
+            {
+                id: "cost_estimation",
+                kind: "pyodide-assert",
+                prompt: "Price the inference bill\nImplement monthly_cost(n_requests, price_per_1k, fixed=0.0): billable units are ceil(n/1000); total is units times price plus fixed.",
+                starterCode: `import math
+
+# TODO: implement monthly_cost(n_requests, price_per_1k, fixed=0.0).
+# Billable units = ceil(n_requests / 1000); total = units * price_per_1k + fixed.
+def monthly_cost(n_requests, price_per_1k, fixed=0.0):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert monthly_cost(2500, 2.0) == 6.0
+assert monthly_cost(1000, 2.0) == 2.0
+assert monthly_cost(1001, 2.0) == 4.0
+assert monthly_cost(0, 2.0, 5.0) == 5.0
+print("cost model bills per started 1k block")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
+            },
+            {
+                id: "latency_caching",
+                kind: "pyodide-assert",
+                prompt: "Model the cache win\nImplement p95_with_cache(base_p95_ms, hit_rate, cache_ms=50): expected latency under a hit mix is hit_rate * cache_ms + (1 - hit_rate) * base.",
+                starterCode: `# TODO: implement p95_with_cache(base_p95_ms, hit_rate, cache_ms=50).
+# Expected latency under a hit mix: hit_rate * cache_ms + (1 - hit_rate) * base.
+def p95_with_cache(base_p95_ms, hit_rate, cache_ms=50):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert p95_with_cache(4000, 0.0) == 4000
+assert p95_with_cache(4000, 1.0) == 50
+assert p95_with_cache(4000, 0.5) == 2025.0
+assert p95_with_cache(4000, 0.9) < 1000, "90% cache hits must bring p95 under 1s here"
+print("cache-hit mix lowers expected latency")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
+            },
+            {
+                id: "incident_rollback",
+                kind: "colab-assert",
+                prompt: "Run the incident walkthrough\nA model regressed in production (accuracy 0.91 -> 0.83 after deploy). Work the runbook below in Colab/docs: detect, decide rollback vs rollforward, diagnose with traces, write the postmortem stub. Paste your rollback decision + evidence.",
+                starterCode: `# Incident walkthrough (no execution needed — do this against your capstone traces).
+# 1. DETECT: which golden metric moved, and when? (compare agent_traces.jsonl windows)
+# 2. DECIDE: rollback if the regression is user-facing and unexplained; rollforward if the fix is one-line and reviewed.
+# 3. DIAGNOSE: top failing slice (per-slice metrics, Lesson 4) + recent deploys diff.
+# 4. POSTMORTEM: timeline, root cause class (data / code / config / upstream), action items with owners.
+DECISION = "rollback"  # or "rollforward", with one-line evidence below
+EVIDENCE = "golden faithfulness 0.92 -> 0.71 starting with deploy #42; slice 'refund' worst"`,
+                assertCode: `# Self-check (run mentally or in Colab): DECISION is set, EVIDENCE names a metric + a deploy/time boundary.`,
+                points: 1,
+                track: ["leader"]
+            }
+        ]
     };
 
     // Advanced Level (Level 3)
@@ -1531,6 +1765,7 @@ def predict(p: Passenger):
         subtitle: "Deep Learning with TensorFlow 2.x",
         level: "advanced",
         number: 8,
+        tracks: { builder: "recommended", researcher: "optional", leader: "optional" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["practical_scikit"],
@@ -1756,6 +1991,7 @@ model.fit(x_train, y_train, epochs=5,
         subtitle: "State-of-the-Art NLP with HuggingFace Transformers",
         level: "advanced",
         number: 9,
+        tracks: { builder: "recommended", researcher: "required", leader: "optional" },
         estimatedTime: 90,
         difficulty: 4,
         prerequisites: ["practical_tensorflow"],
@@ -2044,6 +2280,7 @@ plt.colorbar(im); plt.tight_layout(); plt.show()
         subtitle: "Turning Text, Images, and Items into Searchable Vectors",
         level: "advanced",
         number: 10,
+        tracks: { builder: "required", researcher: "required", leader: "optional" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_transformers"],
@@ -2153,6 +2390,7 @@ for text, score in ranked:
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('embeddings')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2233,7 +2471,34 @@ for text, score in ranked:
             title: "Embedding Space Clusters",
             description: "Visualize how similar items cluster in embedding space.",
             controls: ["changeClustering", "addClusterPoint", "runClustering"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "cosine_ordering",
+                kind: "pyodide-assert",
+                prompt: "Implement cosine similarity\nFill in cosine_sim(a, b) = (a.b)/(|a|*|b|). It must score 1 for identical vectors, 0 for orthogonal ones, -1 for opposites, ignore magnitude, and rank the nearer vector first.",
+                starterCode: `import numpy as np
+
+# TODO: implement cosine similarity between 1-D vectors a and b.
+# cos(a, b) = (a . b) / (|a| * |b|), in [-1, 1].
+def cosine_sim(a, b):
+    raise NotImplementedError("implement cosine similarity")`,
+                assertCode: `import numpy as np
+assert cosine_sim([1, 0], [0, 1]) == 0.0, "orthogonal vectors must score 0"
+assert abs(cosine_sim([1, 1], [1, 1]) - 1.0) < 1e-9, "identical vectors must score 1"
+assert abs(cosine_sim([1, 2, 3], [1, 2, 3]) - 1.0) < 1e-9
+assert abs(cosine_sim([1, 0], [-1, 0]) - (-1.0)) < 1e-9, "opposite vectors must score -1"
+assert abs(cosine_sim([1, 2], [2, 4]) - 1.0) < 1e-9, "cosine ignores magnitude"
+q = [1.0, 0.0]
+near, far = [0.9, 0.1], [0.1, 0.9]
+assert cosine_sim(q, near) > cosine_sim(q, far), "nearer vector must rank first"
+print("cosine similarity orders vectors correctly")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -2245,6 +2510,7 @@ for text, score in ranked:
         subtitle: "Feature Extraction, Fine-tuning, and Adaptation",
         level: "advanced",
         number: 11,
+        tracks: { builder: "optional", researcher: "required", leader: "optional" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_tensorflow", "embeddings"],
@@ -2482,6 +2748,7 @@ model.fit(train_ds, validation_data=val_ds, epochs=2)
         subtitle: "Designing Effective Prompts for Language Models",
         level: "expert",
         number: 12,
+        tracks: { builder: "required", researcher: "recommended", leader: "required" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_transformers"],
@@ -2633,6 +2900,7 @@ print(out.content)
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('prompt_engineering')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2713,7 +2981,41 @@ print(out.content)
             title: "Prompt Playground",
             description: "Type a prompt and watch tokens get generated.",
             controls: ["generateToken", "showProbabilities"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "json_schema_guard",
+                kind: "pyodide-assert",
+                prompt: "Build a JSON guard for LLM output\nImplement extract_json(text): return the parsed object when the text holds exactly one JSON object with keys answer + citations, else raise ValueError.",
+                starterCode: `import json
+
+# TODO: implement extract_json(text) -> dict.
+# Return the parsed object when text contains exactly one JSON object
+# with required keys {"answer", "citations"}; raise ValueError otherwise.
+def extract_json(text):
+    raise NotImplementedError("implement me")`,
+                assertCode: `good = 'Here is the result: {"answer": "Paris", "citations": ["doc1"]} done.'
+obj = extract_json(good)
+assert obj == {"answer": "Paris", "citations": ["doc1"]}, f"wrong parse: {obj}"
+for bad in [
+    "no json here",
+    '{"answer": "Paris"}',
+    '{"answer": 1} {"answer": 2}',
+    '{"answer": "x", "citations": }',
+]:
+    try:
+        extract_json(bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(f"should have raised ValueError for: {bad!r}")
+print("JSON guard accepts valid output, rejects the rest")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -2725,6 +3027,7 @@ print(out.content)
         subtitle: "Grounding LLMs in Your Own Data",
         level: "expert",
         number: 13,
+        tracks: { builder: "required", researcher: "recommended", leader: "required" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["prompt_engineering"],
@@ -2895,6 +3198,7 @@ print(answer)
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('rag_vector_databases')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2973,9 +3277,35 @@ print(answer)
         animation: {
             type: "ml-workflow",
             title: "RAG Pipeline Walkthrough",
-            description: "Walk through the RAG pipeline: chunk -> embed -> retrieve -> rerank -> generate.",
+            description: "Walk through the RAG pipeline: chunk -> embed -> retrieve -> rerank -> cite -> serve -> eval.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "chunk_overlap",
+                kind: "pyodide-assert",
+                prompt: "Implement overlapping chunks with no gaps\nFill in chunk_text(text, size, overlap): sliding windows of at most size chars, consecutive chunks sharing exactly overlap chars, covering the text with no gaps.",
+                starterCode: `# TODO: implement chunk_text(text, size, overlap) -> list[str].
+# Sliding window: chunks of at most size chars, consecutive chunks
+# share exactly overlap chars. No gaps, no empty chunks.
+def chunk_text(text, size, overlap):
+    raise NotImplementedError("implement me")`,
+                assertCode: `text = "abcdefghij" * 10  # 100 chars
+chunks = chunk_text(text, 30, 10)
+assert all(0 < len(c) <= 30 for c in chunks), f"chunk size violated: {[len(c) for c in chunks]}"
+assert len(chunks) == 5, f"expected 5 chunks for 100 chars size=30 overlap=10, got {len(chunks)}"
+for a, b in zip(chunks, chunks[1:]):
+    assert a[-10:] == b[:10], f"overlap mismatch: {a[-10:]!r} vs {b[:10]!r}"
+covered = chunks[0] + "".join(c[10:] for c in chunks[1:])
+assert covered == text, "chunks must cover the text with no gaps"
+assert chunk_text("", 30, 10) == [], "empty text -> no chunks"
+print("chunking covers the text with exact overlap")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -2987,6 +3317,7 @@ print(answer)
         subtitle: "Customizing Models with LoRA & QLoRA",
         level: "expert",
         number: 14,
+        tracks: { builder: "recommended", researcher: "required", leader: "optional" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["practical_transformers", "practical_tensorflow"],
@@ -3201,6 +3532,7 @@ trainer.save_model("./qlora-adapter")
         subtitle: "Measuring LLM Systems Responsibly",
         level: "expert",
         number: 15,
+        tracks: { builder: "recommended", researcher: "required", leader: "required" },
         estimatedTime: 60,
         difficulty: 4,
         prerequisites: ["prompt_engineering", "ai_ethics"],
@@ -3343,6 +3675,7 @@ def evaluate_pair(question, a, b, criterion="helpfulness"):
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('llm_evaluation')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -3423,7 +3756,52 @@ def evaluate_pair(question, a, b, criterion="helpfulness"):
             title: "Eval Loop",
             description: "Walk the eval loop: golden set -> automated metrics -> human review -> red-team -> drift monitoring.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "faithfulness_scoring",
+                kind: "pyodide-assert",
+                prompt: "Score faithfulness like a mini-Ragas\nImplement faithfulness(claims, context): mean over claims of word-overlap fraction (case-insensitive). Must match the golden mini-set and be order-invariant.",
+                starterCode: `# TODO: implement faithfulness(answer_claims, context) -> float in [0, 1].
+# Each claim scores 1.0 if every word appears in the context (case-insensitive),
+# else the fraction of its words present. Return the mean over claims.
+def faithfulness(answer_claims, context):
+    raise NotImplementedError("implement me")`,
+                assertCode: `ctx = "the eiffel tower is in paris and was completed in 1889"
+assert faithfulness(["tower is in paris"], ctx) == 1.0
+assert faithfulness(["tower is in mars"], ctx) == 0.75, "3 of 4 words present"
+assert faithfulness(["mars venus jupiter"], ctx) == 0.0
+assert faithfulness(["tower is in paris", "mars venus jupiter"], ctx) == 0.5
+a = ["tower is in paris", "completed in 1889"]
+b = ["completed in 1889", "tower is in paris"]
+assert faithfulness(a, ctx) == faithfulness(b, ctx), "order must not change the score"
+print("faithfulness metric matches the golden mini-set")
+print("LABCHECK_PASS")`,
+                points: 2
+            },
+            {
+                id: "ab_eval",
+                kind: "pyodide-assert",
+                prompt: "Size the A/B test\nImplement min_n_per_variant(baseline_rate, mde, z=1.96) with the normal-approx formula n = 2*z^2*p*(1-p)/mde^2, ceilinged to int. Smaller detectable effects need bigger samples.",
+                starterCode: `import math
+
+# TODO: implement min_n_per_variant(baseline_rate, mde, z=1.96) with the
+# normal-approx formula for two proportions:
+# n = 2 * z^2 * p*(1-p) / mde^2. Return ceil as int.
+def min_n_per_variant(baseline_rate, mde, z=1.96):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert min_n_per_variant(0.5, 0.1) == 193
+assert min_n_per_variant(0.1, 0.05) == 277
+n = min_n_per_variant(0.7, 0.02)
+assert n > min_n_per_variant(0.7, 0.05), "smaller MDE needs more samples"
+print("A/B sizing follows the power formula")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
+            }
+        ]
     };
 
     // Expert Level (Level 4) -- existing practical LangChain lesson
@@ -3434,6 +3812,7 @@ def evaluate_pair(question, a, b, criterion="helpfulness"):
         subtitle: "Building LLM Applications with LangChain",
         level: "expert",
         number: 16,
+        tracks: { builder: "required", researcher: "recommended", leader: "recommended" },
         estimatedTime: 90,
         difficulty: 4,
         prerequisites: ["llm_evaluation"],
@@ -3658,229 +4037,141 @@ print(r2.content)  # -> "Bob"
         }
     };
     
-    // Quantum-AI Intersection Lesson for Expert Level
-    // LESSON 17: Quantum-AI Intersection
-    COURSE_DATA.levels.expert.lessons.quantum_ai_intersection = {
-        id: "quantum_ai_intersection",
-        title: "Quantum-AI Intersection",
-        subtitle: "Bridging Quantum Computing and Artificial Intelligence",
+    // Frontier Map Lesson for Expert Level (P4: replaces quantum_ai_intersection
+    // in the core path; the quantum lesson lives on in quantum-course/).
+    // LESSON 17: Frontier Topics Map
+    COURSE_DATA.levels.expert.lessons.frontier_map = {
+        id: "frontier_map",
+        title: "Frontier Topics Map",
+        subtitle: "What Is Production vs Research (and How to Tell)",
         level: "expert",
         number: 17,
-        estimatedTime: 90,
-        difficulty: 5,
-        prerequisites: ["practical_tensorflow"],
+        tracks: { builder: "recommended", researcher: "recommended", leader: "recommended" },
+        estimatedTime: 30,
+        difficulty: 3,
+        prerequisites: ["llm_evaluation"],
 
-        
         content: `
             <div class="lesson-section">
-                <h3>🧊 Quantum Mechanics in 5 Minutes (read this first)</h3>
-                <p>Quantum ML assumes you know what a qubit, superposition, and entanglement are. If you don't, here's the minimum:</p>
+                <h3>🎯 What You'll Be Able to Do</h3>
                 <ul>
-                    <li><strong>Qubit</strong>: the quantum analog of a bit. Where a classical bit is 0 or 1, a qubit's state is a unit vector in a 2D complex Hilbert space, written <code>|&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217;</code> with <code>|&#945;|&#178; + |&#946;|&#178; = 1</code>. The two complex amplitudes are the "state".</li>
-                    <li><strong>Superposition</strong>: the qubit isn't "0 or 1" until measured - it's a weighted combination of both. Measurement collapses it to a 0 or 1 with probabilities <code>|&#945;|&#178;</code> and <code>|&#946;|&#178;</code>.</li>
-                    <li><strong>Entanglement</strong>: multiple qubits can be in a joint state that can't be written as a product of individual states. The Bell pair <code>(|00&#10217; + |11&#10217;)/&#8730;2</code> is the canonical example. Entanglement is why quantum parallelism <em>can</em> be exponentially richer than classical parallelism.</li>
-                    <li><strong>Quantum gates</strong>: reversible unitary operations on qubit states - e.g., Hadamard (H) creates superposition, CNOT entangles, RX/RY/RZ rotate. The "feature maps" in the code below build circuits from these.</li>
-                    <li><strong>Measurement</strong>: at the end, you measure; you get classical bits. Reading a quantum state out is the bottleneck of many quantum speedups - onecan be created in superposition but only k bits of information extracted in k measurements.</li>
+                    <li>Separate production-ready techniques from research bets</li>
+                    <li>Evaluate a frontier claim with a 5-minute checklist</li>
+                    <li>Know where the quantum-AI material lives and when to read it</li>
                 </ul>
-                <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ai-green); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;">
-                    <strong>Why this matters for ML:</strong> quantum feature maps embed classical data into very high-dimensional Hilbert spaces. Whether this embedding gives a useful advantage over a classical kernel is exactly the open research question - read on with appropriate skepticism.
-                </div>
+                <p><strong>Before you start:</strong> complete Lesson 15 (LLM Evaluation). This lesson is judgment, not code.</p>
             </div>
 
             <div class="lesson-section">
-                <h3>⚛️+🤖 The Quantum-AI Convergence</h3>
-                <p>Two of the most transformative technologies of our time are beginning to intersect: <strong>Quantum Computing</strong> and <strong>Artificial Intelligence</strong>. This lesson explores how quantum principles <em>might</em> enhance AI, and how AI can help develop quantum systems.</p>
-                <div style="background: rgba(249, 115, 22, 0.1); border-left: 4px solid var(--ai-orange); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;">
-                    <strong>⚠️ Read this first:</strong> Quantum machine learning is largely a <em>research field</em>, not a production toolkit. Most claimed "quantum advantages" for ML are theoretical, problem-specific, or demonstrated only on tiny datasets. No real-world ML workload currently runs faster on quantum hardware than on a classical GPU. Treat this lesson as a map of an active research area, not a set of tools you should reach for in production.
-                </div>
-                <p><strong>Why Combine Quantum + AI? (theoretical motivations)</strong></p>
-                <ul>
-                    <li><strong>Speedup on specific problems:</strong> Some quantum algorithms offer provable speedups for very specific tasks (e.g., Shor for factoring, Grover for unstructured search). For ML the picture is much more nuanced - many proposed speedups assume data can be loaded into quantum states efficiently, which is itself an open problem (the "QRAM" question).</li>
-                    <li><strong>High-dimensional feature spaces:</strong> Quantum feature maps can embed data into an exponentially large Hilbert space, which is interesting for kernel methods - though whether this yields a practical advantage on real data is still open.</li>
-                    <li><strong>Optimization:</strong> Variational quantum algorithms (QAOA, VQE) and quantum annealing are <em>heuristic</em> optimizers. They do <strong>not</strong> guarantee finding the global optimum; they are alternative heuristics that may help on some landscapes and hurt on others.</li>
-                    <li><strong>Quantum Data:</strong> AI can help interpret quantum simulation data - this is one of the more credible near-term directions.</li>
-                </ul>
-                <p><strong>Key references:</strong> Biamonte et al. (2017) "Quantum machine learning"; Schuld, Sinayskiy &amp; Petruccione (2014); Arunachalam et al. (2015). Always read the primary literature before repeating quantum-ML claims.</p>
-            </div>
-
-            <div class="lesson-section">
-                <h3>🔗 Quantum-AI Integration Approaches</h3>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-blue);">
-                        <h4>🧮 Quantum Machine Learning</h4>
-                        <p>Quantum algorithms applied to ML tasks (research stage)</p>
-                        <ul>
-                            <li>Quantum kernel methods (QSVC)</li>
-                            <li>Variational quantum circuits as classifiers</li>
-                            <li>Quantum neural networks (QNNs)</li>
-                        </ul>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-purple);">
-                        <h4>🔄 Hybrid Quantum-Classical</h4>
-                        <p>Combine quantum and classical components</p>
-                        <ul>
-                            <li>Quantum layers in classical NN (PennyLane, TFQ)</li>
-                            <li>Classical pre/post processing</li>
-                            <li>Quantum feature extraction</li>
-                        </ul>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-green);">
-                        <h4>🤖 AI for Quantum</h4>
-                        <p>Use AI to improve quantum computing</p>
-                        <ul>
-                            <li>Quantum circuit optimization</li>
-                            <li>Error correction</li>
-                            <li>Quantum control</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🏗️ Quantum-AI Libraries Overview</h3>
-                <p><strong>Available Frameworks:</strong></p>
-                <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-                    <thead><tr style="border-bottom: 2px solid var(--border-color);"><th style="text-align: left; padding: 0.5rem;">Library</th><th style="text-align: left; padding: 0.5rem;">Focus</th><th style="text-align: left; padding: 0.5rem;">Integration</th></tr></thead>
+                <h3>🗺️ The Map</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead><tr style="border-bottom: 2px solid var(--border-color);"><th>Technique</th><th>Status</th><th>Evidence bar</th></tr></thead>
                     <tbody>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>Qiskit ML</strong></td><td style="padding: 0.5rem;">Quantum Kernels, QSVM, QNN</td><td style="padding: 0.5rem;">scikit-learn compatible</td></tr>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>PennyLane</strong></td><td style="padding: 0.5rem;">Hybrid Q-C models</td><td style="padding: 0.5rem;">PyTorch, TensorFlow, JAX</td></tr>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>TensorFlow Quantum</strong></td><td style="padding: 0.5rem;">Quantum Deep Learning</td><td style="padding: 0.5rem;">TensorFlow integration</td></tr>
-                        <tr><td style="padding: 0.5rem;"><strong>Cirq</strong></td><td style="padding: 0.5rem;">NISQ circuits</td><td style="padding: 0.5rem;">TFQ backend, Google Cloud</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>RAG + eval (Lessons 13, 15)</td><td><strong>Production</strong></td><td>Golden set + faithfulness on your data</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>Tool-calling agents (Lessons 16, 18)</td><td><strong>Production, with guardrails</strong></td><td>Red-team set + traces + max-iterations bound</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>Small-model fine-tuning / QLoRA (Lesson 14)</td><td><strong>Production, narrow</strong></td><td>Base-vs-tuned on held-out data + forgetting check</td></tr>
+                        <tr><td>Quantum ML advantage</td><td><strong>Research</strong></td><td>Problem-specific paper + reproduction; see quantum-course/</td></tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🚀 Practical Quantum-AI Applications</h3>
-                ${QUANTUM_LIBRARY_GUIDES.qiskit.helloWorld}
-                <p><strong>Qiskit Machine Learning</strong> provides quantum kernels that can be used with classical SVM classifiers to potentially achieve quantum advantage on certain datasets.</p>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🔬 Hybrid Quantum-Classical Neural Networks</h3>
-                ${QUANTUM_LIBRARY_GUIDES.pennylane.helloWorld}
-                <p><strong>Key Benefits:</strong> PennyLane allows quantum circuits to be seamlessly integrated as layers in classical deep learning models, enabling hybrid architectures that leverage both quantum and classical processing.</p>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>☁️ Quantum Cloud Platforms for AI</h3>
-                <p><strong>Available Cloud Services:</strong></p>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🔵 IBM Quantum</h4>
-                        <p><small>Free access to real quantum computers with Qiskit integration</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🟠 Amazon Braket</h4>
-                        <p><small>Multiple hardware providers with AWS integration</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🟢 Google Quantum AI</h4>
-                        <p><small>Sycamore processor with TensorFlow Quantum</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🔴 Azure Quantum</h4>
-                        <p><small>Multi-provider access with Azure ML integration</small></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>💡 Hands-on: Quantum Feature Embedding</h3>
-                ${QUANTUM_LIBRARY_GUIDES.cirq.helloWorld}
-                <p><strong>Use Case:</strong> Quantum feature embedding can encode classical data into quantum states - a candidate approach for representing high-dimensional data. Whether this yields a practical advantage on real data is still an open research question.</p>
+                <p>Rule of thumb: if nobody can show you a held-out eval on data shaped like yours, it is research — interesting, worth tracking, not worth betting a launch on.</p>
             </div>
 
             <div class="lesson-section">
-                <h3>⚫️ Run on Quantum Cloud Hardware</h3>
-                ${renderQuantumCloudGuide('ibm_quantum')}
+                <h3>🔍 The 5-Minute Claim Checklist</h3>
+                <ol>
+                    <li><strong>What exactly improved, on what dataset?</strong> "Exponential speedup" with no problem named is hype (remember the AI Winters, Lesson 1).</li>
+                    <li><strong>Versus what baseline?</strong> A new method beating a weak baseline proves nothing.</li>
+                    <li><strong>Held-out?</strong> Tuned-on-golden numbers are leakage, not evidence (Lessons 15, 19-21).</li>
+                    <li><strong>Cost included?</strong> Latency, hardware, and maintenance count (Lesson 7).</li>
+                    <li><strong>Who reproduces it?</strong> One lab's demo vs independent replication.</li>
+                </ol>
             </div>
 
             <div class="lesson-section">
-                <h3>💻 Try It Yourself</h3>
-                ${renderInteractiveLab()}
+                <h3>⚫️ Quantum-AI Lives Next Door</h3>
+                <p>The full quantum lesson (qubits → Qiskit 1.x → kernels → caveats) moved to <code>quantum-course/</code> with per-claim citations (<code>CITATIONS.md</code>). Read it after Lessons 3 + 5, when you want research breadth — not as a job skill.</p>
+                <p><strong>Honest summary:</strong> quantum ML is theoretically rich and practically unproven for ML advantage. Track it; don't plan around it.</p>
             </div>
         `,
-        
-        concepts: ["Quantum-AI Convergence", "Quantum Machine Learning", "Hybrid Architectures", "Quantum Libraries", "Quantum Cloud Platforms", "Quantum Feature Embedding"],
-        
+
+        concepts: ["Production vs research", "Claim evaluation", "Hype skepticism", "Frontier map", "Quantum positioning"],
+
         quiz: {
-            id: "quantum_ai_quiz",
-            title: "Quantum-AI Intersection Quiz",
+            id: "frontier_map_quiz",
+            title: "Frontier Map Quiz",
             passingScore: 60,
-            timeLimit: 450,
+            timeLimit: 360,
             questions: [
                 {
                     id: "q1", type: "multiple-choice",
-                    question: "What is the most accurate statement about the current advantage of combining quantum computing with AI?",
+                    question: "Which of these is production-ready today with the right guardrails?",
                     options: [
-                        { text: "Most claimed quantum-ML advantages are theoretical and problem-specific - no real-world ML workload currently runs faster on quantum hardware than on a classical GPU", isCorrect: true },
-                        { text: "Quantum computers already give exponential speedup for all ML tasks", isCorrect: false },
-                        { text: "Quantum annealing guarantees the global optimum for any ML loss landscape", isCorrect: false },
-                        { text: "Quantum ML is a mature production technology used by most enterprises", isCorrect: false }
+                        { text: "RAG with golden-set eval, or tool-calling agents with red-teaming + traces", isCorrect: true },
+                        { text: "Quantum ML advantage on general workloads", isCorrect: false },
+                        { text: "Any method with a vendor benchmark slide", isCorrect: false },
+                        { text: "Nothing in AI is production-ready", isCorrect: false }
                     ],
-                    explanation: "Quantum machine learning is largely a research field. Most claimed speedups are theoretical, problem-specific, or assume efficient quantum data loading (QRAM) which is itself an open problem.",
-                    difficulty: 2, concept: "Quantum-AI Convergence"
+                    explanation: "RAG, guarded agents, and narrow fine-tuning ship today when measured; quantum advantage remains research.",
+                    difficulty: 1, concept: "Production vs research"
                 },
                 {
                     id: "q2", type: "multiple-choice",
-                    question: "What is a qubit's state?",
+                    question: "A vendor claims exponential speedup on all ML workloads. Best response?",
                     options: [
-                        { text: "A unit vector in a 2D complex Hilbert space: |psi> = alpha|0> + beta|1> with |alpha|^2 + |beta|^2 = 1", isCorrect: true },
-                        { text: "Either 0 or 1, like a classical bit", isCorrect: false },
-                        { text: "A real number in [0, 1]", isCorrect: false },
-                        { text: "An integer 0 through 7", isCorrect: false }
+                        { text: "Ask which problems, versus which baseline, on held-out data — and check Lesson 1's AI Winters", isCorrect: true },
+                        { text: "Adopt immediately to stay competitive", isCorrect: false },
+                        { text: "Dismiss all quantum work outright", isCorrect: false },
+                        { text: "Ask for a bigger benchmark number", isCorrect: false }
                     ],
-                    explanation: "A qubit's state is a unit vector in a complex 2D Hilbert space; measurement yields a classical bit with probabilities |alpha|^2 and |beta|^2.",
-                    difficulty: 2, concept: "Qubit"
+                    explanation: "Problem-specific evidence + baseline + held-out eval. Hype cycles (AI Winters) are the historical warning.",
+                    difficulty: 2, concept: "Hype skepticism"
                 },
                 {
                     id: "q3", type: "multiple-choice",
-                    question: "What is the purpose of quantum feature embedding?",
+                    question: "A frontier demo reports 99% on its eval set — tuned on the same set. What is this?",
                     options: [
-                        { text: "Encode classical data into quantum states, potentially enabling high-dimensional representations (advantage is still open)", isCorrect: true },
-                        { text: "Convert quantum algorithms to classical code", isCorrect: false },
-                        { text: "Visualize quantum circuits", isCorrect: false },
-                        { text: "Optimize classical neural networks", isCorrect: false }
+                        { text: "Eval leakage; the number is not evidence", isCorrect: true },
+                        { text: "Proof of production readiness", isCorrect: false },
+                        { text: "A fair benchmark", isCorrect: false },
+                        { text: "Overfitting, but harmless for demos", isCorrect: false }
                     ],
-                    explanation: "Quantum feature embedding encodes classical data into quantum states. Whether this yields a practical advantage on real data is still open.",
-                    difficulty: 2, concept: "Quantum Feature Embedding"
+                    explanation: "Tuning on the reporting set leaks; keep tuning and reporting sets disjoint (Lessons 15, 19-21).",
+                    difficulty: 2, concept: "Claim evaluation"
                 },
                 {
                     id: "q4", type: "multiple-choice",
-                    question: "Which library enables hybrid quantum-classical neural networks with PyTorch integration?",
+                    question: "First step before adopting a frontier technique in production?",
                     options: [
-                        { text: "PennyLane - its qml.qnn.TorchLayer wraps a quantum circuit as a PyTorch layer", isCorrect: true },
-                        { text: "Qiskit ML - primarily provides kernels and QSVC", isCorrect: false },
-                        { text: "TensorFlow Quantum - integrates with TF, not PyTorch directly", isCorrect: false },
-                        { text: "Cirq - is a circuit framework, not integrated with PyTorch", isCorrect: false }
+                        { text: "Reproduce it on your data and measure against your current baseline, cost included", isCorrect: true },
+                        { text: "Rewrite the roadmap around it", isCorrect: false },
+                        { text: "Wait for a textbook chapter", isCorrect: false },
+                        { text: "Benchmark on the vendor's dataset", isCorrect: false }
                     ],
-                    explanation: "PennyLane is designed for hybrid Q-C models and supports PyTorch, TensorFlow, and JAX via its qnn layer wrappers.",
-                    difficulty: 3, concept: "Quantum Libraries"
+                    explanation: "Your data + your baseline + cost (latency/hardware/maintenance) is the only adoption test that matters.",
+                    difficulty: 2, concept: "Claim evaluation"
                 },
                 {
                     id: "q5", type: "multiple-choice",
-                    question: "Why is 'quantum annealing finds the global optimum' an overstatement?",
+                    question: "How is the quantum-AI material positioned in this course?",
                     options: [
-                        { text: "Annealing is a heuristic - it does not guarantee global optima; it's another optimization recipe that may help on some landscapes", isCorrect: true },
-                        { text: "Quantum annealing is the same as classical gradient descent", isCorrect: false },
-                        { text: "It's guaranteed mathematically to find the optimum", isCorrect: false },
-                        { text: "It never finds any optima", isCorrect: false }
+                        { text: "Standalone research track (quantum-course/): theoretical/contested, read after Lessons 3 + 5", isCorrect: true },
+                        { text: "Core hiring skill, required for all tracks", isCorrect: false },
+                        { text: "Removed entirely", isCorrect: false },
+                        { text: "Prerequisite for the agent capstone", isCorrect: false }
                     ],
-                    explanation: "Annealing, like other variational methods, is a heuristic optimizer. It can help on some loss landscapes and fail on others; it does not provably find global optima in general.",
-                    difficulty: 2, concept: "Quantum-AI Convergence"
+                    explanation: "Quantum lives next door as cited research material — track it, don't plan launches around it.",
+                    difficulty: 1, concept: "Quantum positioning"
                 }
             ]
         },
-        
         animation: {
-            type: "nn-visualizer",
-            title: "Quantum Neural Network Visualizer",
-            description: "Visualize hybrid quantum-classical neural network architectures.",
-            controls: ["addQuantumLayer", "addClassicalLayer", "simulate"]
+            type: "ml-workflow",
+            title: "Frontier Map",
+            description: "Walk the production-vs-research map: technique -> evidence bar -> verdict.",
+            controls: ["nextStep", "previousStep"]
         }
     };
-    
+
     // Research Level (Level 5)
     // LESSON 18: Building AI Agents
     COURSE_DATA.levels.research.lessons.practical_agents = {
@@ -3889,6 +4180,7 @@ print(r2.content)  # -> "Bob"
         subtitle: "From Simple to Autonomous Agents",
         level: "research",
         number: 18,
+        tracks: { builder: "required", researcher: "required", leader: "recommended" },
         estimatedTime: 90,
         difficulty: 5,
         prerequisites: ["practical_langchain"],
@@ -4205,6 +4497,7 @@ print(run_multi_agent_query("What is the capital of France?"))
         subtitle: "Build a Production-Style RAG System End-to-End",
         level: "research",
         number: 19,
+        tracks: { builder: "required", researcher: "optional", leader: "required" },
         estimatedTime: 180,
         difficulty: 5,
         prerequisites: ["practical_agents", "rag_vector_databases", "prompt_engineering", "llm_evaluation"],
@@ -4396,6 +4689,12 @@ print(result)
                     <li>One improvement backlog: 3 ranked next-changes derived from the eval results</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/rag-chatbot/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('rag-chatbot')}
+            </div>
         `,
 
         concepts: ["RAG end-to-end", "Chunking", "Embeddings", "Retrieval", "MMR", "Reranking", "Citations", "FastAPI serving", "Ragas eval", "Capstone rubric"],
@@ -4474,6 +4773,14 @@ print(result)
             title: "RAG Pipeline Walkthrough",
             description: "Walk the full end-to-end RAG pipeline: ingest -> chunk -> embed -> index -> retrieve -> rerank -> generate -> cite -> evaluate.",
             controls: ["nextStep", "previousStep"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/rag-chatbot/.
+        capstone: {
+            id: "rag-chatbot",
+            starterPath: "capstones/rag-chatbot/starter",
+            goldenSet: "capstones/rag-chatbot/expected/golden_qa.json",
+            latencyBudgetP95: "4s"
         }
     };
 
@@ -4487,6 +4794,7 @@ print(result)
         subtitle: "End-to-end PEFT Pipeline with Evaluation",
         level: "research",
         number: 20,
+        tracks: { builder: "required", researcher: "recommended", leader: "recommended" },
         estimatedTime: 150,
         difficulty: 5,
         prerequisites: ["capstone_rag_chatbot", "fine_tuning_peft", "llm_evaluation"],
@@ -4737,6 +5045,12 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
                     <li>Self-score against rubric in "Self-assessment" section</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/finetune-slm/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('finetune-slm')}
+            </div>
         `,
 
         concepts: ["Instruction tuning", "Data preparation", "Deduplication", "QLoRA", "Adapter merge", "Base vs fine-tuned eval", "Model card", "Reproducibility"],
@@ -4815,6 +5129,13 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
             title: "LoRA Trainer Scoring",
             description: "Watch training loss decrease as the LoRA adapter learns.",
             controls: ["addNeuronLayer", "changeNNActivation", "updateLearningRate", "trainNN"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/finetune-slm/.
+        capstone: {
+            id: "finetune-slm",
+            starterPath: "capstones/finetune-slm/starter",
+            goldenSet: "capstones/finetune-slm/expected/golden_eval.json"
         }
     };
 
@@ -4829,6 +5150,7 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
         subtitle: "Tool Calling, Safety, and Observability",
         level: "research",
         number: 21,
+        tracks: { builder: "required", researcher: "optional", leader: "recommended" },
         estimatedTime: 120,
         difficulty: 5,
         prerequisites: ["capstone_rag_chatbot", "practical_agents", "prompt_engineering"],
@@ -5086,6 +5408,12 @@ print(f"\\nRed-team pass rate: {pass_rate*100:.0f}%")
                     <li>Self-score against rubric in "Self-assessment" section</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/agent-tools/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('agent-tools')}
+            </div>
         `,
 
         concepts: ["Tool calling agent", "AgentExecutor", "Safety guardrails", "Input validation", "Output validation", "Observability", "Red-teaming", "Reproducibility"],
@@ -5164,6 +5492,14 @@ print(f"\\nRed-team pass rate: {pass_rate*100:.0f}%")
             title: "Agent Reasoning Simulator",
             description: "Watch the agent loop: observe -> think -> act -> evaluate. Try Planning Agent mode for multi-step tasks.",
             controls: ["agentTypeSelector", "runAgent"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/agent-tools/.
+        capstone: {
+            id: "agent-tools",
+            starterPath: "capstones/agent-tools/starter",
+            goldenSet: "capstones/agent-tools/expected/redteam.json",
+            minRedTeam: 10
         }
     };
 

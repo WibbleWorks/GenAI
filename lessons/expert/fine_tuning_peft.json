@@ -167,5 +167,10 @@
       "updateLearningRate",
       "trainNN"
     ]
+  },
+  "tracks": {
+    "builder": "recommended",
+    "researcher": "required",
+    "leader": "optional"
   }
 }

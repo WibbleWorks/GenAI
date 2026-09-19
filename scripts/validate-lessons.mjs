@@ -197,3 +197,25 @@ if (fail > 0) {
     process.exit(1);
 }
 console.log(`LESSON SCHEMA VALIDATION PASSED (${pass} lessons valid against docs/lesson.schema.json)`);
+
+// --- P4: standalone quantum-course lessons validate against the same schema ---
+import { readdirSync, existsSync } from 'node:fs';
+const qDir = join(ROOT, 'quantum-course', 'lessons');
+if (existsSync(qDir)) {
+    let qpass = 0, qfail = 0;
+    for (const f of readdirSync(qDir).filter(f => f.endsWith('.json'))) {
+        const lesson = JSON.parse(readFileSync(join(qDir, f), 'utf8'));
+        const errs = validateWithDefs(lesson, 'quantum-course/' + f);
+        if (errs.length === 0) { qpass++; console.log(`  ok:  quantum-course/${f}`); }
+        else {
+            qfail++;
+            console.error(`  FAIL: quantum-course/${f}`);
+            errs.forEach(e => console.error(`      ${e}`));
+        }
+    }
+    if (qfail > 0) {
+        console.error(`QUANTUM LESSON VALIDATION FAILED (${qfail} failing)`);
+        process.exit(1);
+    }
+    console.log(`QUANTUM LESSON VALIDATION PASSED (${qpass} standalone lessons valid)`);
+}

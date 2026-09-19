@@ -1,6 +1,6 @@
 # Generative AI & Machine Learning Course
 
-An interactive, browser-based AI/ML course covering foundations, applied ML, deep learning, LLM systems, and a research-topics tier on agents, capstones, and the quantum-AI frontier. Real Python execution in the browser via Pyodide; 21 lessons; 105 quiz questions (5 per lesson); 3 capstone projects with rubrics.
+An interactive, browser-based AI/ML course covering foundations, applied ML, deep learning, LLM systems, and a research-topics tier on agents, capstones, and the frontier map. Real Python execution in the browser via Pyodide; 21 lessons; 105 quiz questions (5 per lesson); 3 capstone projects with rubrics. Quantum-AI is a standalone track in `quantum-course/` (theoretical/contested, per-claim citations).
 
 > **Status:** 21 lessons across 5 levels, 105 quiz questions (5 per lesson, all shuffled with review mode), 3 end-to-end capstone projects with rubrics, 13 interactive animations. See `docs/CRITICAL_REVIEW.md`, `docs/REMEDIATION_LOG.md`, `docs/CONTENT_ROADMAP.md`, `docs/CONTENT_MODEL.md`.
 
@@ -33,7 +33,7 @@ The course is organized as a 5-level ladder. Each lesson has written content, an
 14. Fine-tuning & PEFT (LoRA / QLoRA)
 15. LLM Evaluation
 16. Hands-on LangChain (LCEL, agents, memory)
-17. Quantum-AI Intersection
+17. Frontier Topics Map (production vs research; quantum lives in `quantum-course/`)
 
 **Level 5: Research Topics**
 18. Building AI Agents

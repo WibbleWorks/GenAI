@@ -441,3 +441,32 @@ was a band-aid. The real fix is per-user, server-side storage with social login.
 
 ---
 
+
+## Phase 15 — Portfolio tracks release (per `docs/IMPLEMENTATION_PLAN.md` P0–P5)
+
+Shipped as stacked PRs #1–#6 against `WibbleWorks/GenAI` (spec: `docs/IMPLEMENTATION_PLAN.md`).
+
+### P0 scaffold (PR #1)
+- `lesson.schema.json`: optional `labChecks`/`tracks`/`capstone`, `mcq-code` type. 21/21 validate.
+- `extract-lessons.mjs` emits `lessons/manifest.json` (sha hashes); `CONTENT_MODEL.md` documents new fields.
+- `capstones/*/STARTER.md` stubs + `quantum-course/` stubs. Re-exported stale lesson JSON (a11y attrs, math loss-landscape).
+
+### P1 labs core (PR #2)
+- 5 pyodide-assert checks (scikit/embeddings/prompt/RAG/eval) + `AILab.checkCode()` + card renderer + `labChecksPassed` progress. All discriminate (starter FAILS, solution PASSES, executed).
+- `scripts/smoke-labchecks.mjs` with reference solutions. `mcq-code` badge (scoring type-agnostic).
+
+### P2 portfolio capstones (PR #3)
+- Runnable starters + golden sets: RAG 20/20 EVAL_PASS (+curl-verified `/ask`), agent 12/12 REDTEAM_PASS, finetune prep + base-vs-tuned eval harness.
+- STARTER/SOLUTION/SUBMISSION/REVIEWER per capstone; `capstone` lesson metadata; submission widget + `capstonesSubmitted`; Portfolio-Complete gate with grandfather flag.
+
+### P3 tracks (PR #4)
+- `tracks` on all 21 lessons; track-aware Next (skip optionals); sidebar tags + dimming; badge required-progress; Manager rename; placement bonus Q (signal-only); 4 Manager-track labs (cost/latency/incident/A-B). Route walks validated.
+
+### P4 quantum spin-out (PR #5)
+- Swap (not renumber): Lesson 17 is now the Frontier Map; quantum relocated to `quantum-course/` with real citations. Progress carried forward. Validator covers quantum-course.
+
+### P5 loader + exec CI (PR #6)
+- `loader.js` JSON overlay (JSON wins, 5s offline-tolerant race); `ai_introduction` pilot with no inline body (browser smoke asserts non-empty); extractor `--check` (hash drift + stale files) + pilot guard; `smoke-codeblocks.mjs`; CI is 7 jobs; progress `version: 2` + id aliases; `RELEASE_NOTES.md` created; quarterly owner named.
+
+### Verification (Phase 15 exit)
+- `node --check` 6/6, schema 21 core + 1 standalone, manifest --check clean, loader harness 6/6, labcheck smoke 12 ok, codeblock smoke 9 ok, course smoke PASSED, lint pinned.

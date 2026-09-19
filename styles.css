@@ -241,6 +241,21 @@ body {
     cursor: not-allowed;
 }
 
+/* P3: lessons optional for the current track (tagged, still open).
+   NOTE: no opacity dimming here — it multiplies down children's effective
+   contrast below WCAG AA (axe color-contrast caught .track-tag). The tag
+   alone carries the signal at full --text-muted (#c5d4e3, ~6.8:1). */
+.nav-item.track-optional {
+    border-left: 3px solid transparent;
+}
+
+.track-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 0.35rem;
+    white-space: nowrap;
+}
+
 .nav-indicator {
     width: 8px;
     height: 8px;

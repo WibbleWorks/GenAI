@@ -1,0 +1,12 @@
+[
+  {"id": "g01", "instruction": "Password reset steps?", "response": "Open settings, choose security, then reset password.", "keywords": ["settings", "security", "reset"]},
+  {"id": "g02", "instruction": "Reset link lifetime?", "response": "The reset link expires in one hour.", "keywords": ["expires", "one hour"]},
+  {"id": "g03", "instruction": "Cancel subscription?", "response": "Cancel any time from the billing page.", "keywords": ["cancel", "billing"]},
+  {"id": "g04", "instruction": "Refund window?", "response": "Refunds are available within 14 days of purchase.", "keywords": ["refunds", "14 days"]},
+  {"id": "g05", "instruction": "Warranty length?", "response": "Two year warranty covering manufacturing defects.", "keywords": ["two year", "manufacturing"]},
+  {"id": "g06", "instruction": "Accidental damage?", "response": "Accidental damage is excluded from the warranty.", "keywords": ["accidental", "excluded"]},
+  {"id": "g07", "instruction": "Downgrade timing?", "response": "Downgrades take effect next month.", "keywords": ["downgrades", "next month"]},
+  {"id": "g08", "instruction": "Support contact?", "response": "Contact support with your serial number.", "keywords": ["support", "serial number"]},
+  {"id": "g09", "instruction": "Late refund?", "response": "No refunds after 14 days from purchase.", "keywords": ["no", "14 days"]},
+  {"id": "g10", "instruction": "Claim requirements?", "response": "Provide your serial number and proof of purchase.", "keywords": ["serial number", "proof"]}
+]

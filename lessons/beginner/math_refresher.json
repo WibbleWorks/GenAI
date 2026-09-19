@@ -172,5 +172,10 @@
       "autoLl",
       "resetLl"
     ]
+  },
+  "tracks": {
+    "builder": "optional",
+    "researcher": "required",
+    "leader": "optional"
   }
 }

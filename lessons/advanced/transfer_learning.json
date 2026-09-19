@@ -166,5 +166,10 @@
       "changeActivation",
       "train"
     ]
+  },
+  "tracks": {
+    "builder": "optional",
+    "researcher": "required",
+    "leader": "optional"
   }
 }

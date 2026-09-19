@@ -1,24 +1,41 @@
-# Capstone 19 — Mini RAG Chatbot (STARTER, P0 scaffold)
+# Capstone 19 — Mini RAG Chatbot
 
-> P0 skeleton. Full starter + golden set + SOLUTION + SUBMISSION + REVIEWER land in P2.
-> Lesson: `capstone_rag_chatbot` (research). Stack: embeddings → Chroma/FAISS → MMR rerank → cite → FastAPI → Ragas eval.
+End-to-end: ingest → chunk → embed → index → retrieve → rerank → cite → serve → eval.
+Prereqs: Lessons 12 (Prompt Eng), 13 (RAG), 15 (LLM Eval).
 
-## Quickstart (30 min)
+## 30-minute quickstart
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install "fastapi>=0.115" "uvicorn>=0.30" "chromadb>=0.5" "sentence-transformers>=3.0" "ragas>=0.2"
-uvicorn starter.app:app --reload  # POST /ask {question} -> {answer, citations}
+cd capstones/rag-chatbot/starter
+python3 rag_chatbot.py --ask "how do I reset my password?"
+python3 rag_chatbot.py --eval ../expected/golden_qa.json   # must print EVAL_PASS (bar: 0.80)
+python3 rag_chatbot.py --serve --port 8766                 # POST /ask {"question": "..."}
 ```
 
-## What to build (maps to rubric rows)
+No dependencies — stdlib only. Retrieval here is word-overlap + sentence
+chunks on purpose: small, honest, fully runnable. Your capstone replaces the
+toy parts with the real stack (below) while keeping the interfaces.
 
-1. Ingest → chunk (with overlap) → embed → index.
-2. Retrieve + MMR rerank + cite (no fake citations).
-3. Serve `POST /ask`, p95 < 4s on golden set.
-4. Eval golden set (`expected/golden_qa.json`, P2) — faithfulness / answer-relevance / context-relevance.
-5. Self-assess against rubric (14/20, ≥3 every row) + 3-item improvement backlog.
+## Your build (maps to rubric rows)
 
-## Env pins
+1. **Corpus + chunking** — replace `CORPUS` with your docs (team wiki, PDFs via
+   `pypdf`, markdown files). Keep sentence chunks or move to token windows
+   (Lesson 13). Record chunk size/overlap in your README.
+2. **Embeddings + index** — swap `score()` for `sentence-transformers`
+   (`BAAI/bge-small-en-v1.5`) + Chroma or FAISS. Keep the `retrieve()` signature.
+3. **Rerank + cite** — keep MMR diversity; add a cross-encoder rerank if you
+   like. Never emit a citation you didn't retrieve (see SOLUTION.md trap #2).
+4. **Serve** — keep `POST /ask → {answer, citations}`; log p95 latency.
+   Budget: p95 < 4s on the golden set.
+5. **Eval** — extend `expected/golden_qa.json` to 50+ items from YOUR corpus,
+   add Ragas faithfulness/answer-relevance (Lesson 15), and beat the starter's bar.
 
-See lesson code blocks for `Last verified` stamps. CI import-checks asserts in P5.
+## Pinned env (real stack)
+
+```bash
+pip install "sentence-transformers>=3.0" "chromadb>=0.5" "fastapi>=0.115" "uvicorn>=0.30" "ragas>=0.2"
+```
+
+## Submit
+
+See SUBMISSION.md. Then `REVIEWER.md` is how your work gets scored — read it first.

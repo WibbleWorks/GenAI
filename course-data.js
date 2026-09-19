@@ -24,56 +24,12 @@ const COURSE_DATA = {
                     subtitle: "Fundamentals of Artificial Intelligence",
                     level: "beginner",
                     number: 1,
+                    tracks: { builder: "required", researcher: "required", leader: "required" },
                     estimatedTime: 45,
                     difficulty: 1,
                     prerequisites: [],
                     
-                    content: `
-                        <div class="lesson-section">
-                            <h3>🤖 What is Artificial Intelligence?</h3>
-                            <p><strong>Definition:</strong> AI is the field of building systems that perform tasks normally requiring human intelligence - perception, reasoning, language, decision-making, and learning.</p>
-                            <p><strong>Important distinction:</strong> AI is the broad field. <em>Machine Learning</em> is one approach within AI where systems learn patterns from data. Not all AI learns from data - symbolic AI and expert systems use rules and logic instead.</p>
-                            <p><strong>Key Characteristics:</strong> Reasoning, perception, action, adaptation, language understanding.</p>
-                        </div>
-                        
-                        <div class="lesson-section">
-                            <h3>📜 Brief History of AI</h3>
-                            <p><strong>1950-1956 - Birth:</strong> Turing Test (1950), Dartmouth Conference (1956) coins the term "Artificial Intelligence."</p>
-                            <p><strong>1956-1974 - Golden Years:</strong> LISP, ELIZA, the Perceptron; optimism and heavy funding.</p>
-                            <p><strong>1974-1980 - First AI Winter:</strong> Funding cuts as early methods hit limits (Lighthill Report).</p>
-                            <p><strong>1980-1987 - Expert Systems:</strong> Rule-based systems see commercial success.</p>
-                            <p><strong>1987-1993 - Second AI Winter:</strong> Expert-system market collapses.</p>
-                            <p><strong>1993-2010 - Machine Learning Era:</strong> SVMs, statistical learning, neural networks; data and compute grow.</p>
-                            <p><strong>2010-2016 - Deep Learning Breakthrough:</strong> AlexNet (2012), GPUs, big data; CNNs dominate vision.</p>
-                            <p><strong>2016-2023 - AI Renaissance:</strong> AlphaGo, Transformers (2017), GPT/LLMs, generative AI.</p>
-                            <p><strong>2023-Present - Agentic &amp; Multimodal AI:</strong> Tool-using agents, multimodal models, reasoning models, open-weight ecosystems.</p>
-                        </div>
-                        
-                        <div class="lesson-section">
-                            <h3>🎯 Types of AI</h3>
-                            <p><strong>By Capability:</strong> Narrow AI (current) → General AI (hypothetical) → Super AI (theoretical)</p>
-                            <p><strong>By Functionality:</strong> Reactive → Limited Memory → Theory of Mind → Self-Aware</p>
-                            <p><strong>Note:</strong> Every AI system that exists today is Narrow AI - it is specialized for a task or family of tasks. AGI remains a research goal.</p>
-                        </div>
-                        
-                        <div class="lesson-section">
-                            <h3>💡 AI vs ML vs Deep Learning</h3>
-                            <p><strong>Relationship:</strong> Deep Learning ⊂ Machine Learning ⊂ Artificial Intelligence</p>
-                            <ul>
-                                <li><strong>AI:</strong> Any system performing tasks that normally require human intelligence (can be rule-based or learned)</li>
-                                <li><strong>ML:</strong> Systems that learn patterns from data instead of being explicitly programmed</li>
-                                <li><strong>DL:</strong> ML using neural networks with many layers</li>
-                            </ul>
-                            <p><strong>Quick check:</strong> A hand-written rules engine for diagnosing diseases is AI but <em>not</em> ML. A spam filter trained on millions of emails is both AI and ML.</p>
-                        </div>
-                        
-                        <div class="lesson-section">
-                            <h3>🚀 Why AI Matters Now</h3>
-                            <p><strong>Convergence:</strong> Data explosion + GPU/TPU acceleration + algorithm breakthroughs</p>
-                            <p><strong>Impact Areas:</strong> Productivity, Healthcare, Finance, Education, Entertainment, Science</p>
-                            <p><strong>Responsibility:</strong> With capability comes the duty to handle bias, safety, privacy, and societal impact - covered in the next lesson on AI Ethics.</p>
-                        </div>
-                    `,
+                    content: "" /* P5 pilot: body served from lessons/beginner/ai_introduction.json via loader.js (JSON wins). Inline fallback removed; browser smoke asserts non-empty. */,
                     
                     concepts: ["AI Definition", "AI History", "Types of AI", "AI vs ML", "ML vs DL"],
 
@@ -159,6 +115,7 @@ const COURSE_DATA = {
                     subtitle: "How Machines Learn from Data",
                     level: "beginner",
                     number: 2,
+                    tracks: { builder: "required", researcher: "required", leader: "required" },
                     estimatedTime: 45,
                     difficulty: 2,
                     prerequisites: ["ai_introduction"],
@@ -305,6 +262,7 @@ const COURSE_DATA = {
                     subtitle: "Building Blocks of Deep Learning",
                     level: "beginner",
                     number: 3,
+                    tracks: { builder: "required", researcher: "required", leader: "optional" },
                     estimatedTime: 75,
                     difficulty: 2,
                     prerequisites: ["ml_introduction"],
@@ -483,6 +441,7 @@ const COURSE_DATA = {
                     subtitle: "Bias, Fairness, Safety, and Accountability",
                     level: "beginner",
                     number: 4,
+                    tracks: { builder: "required", researcher: "required", leader: "required" },
                     estimatedTime: 60,
                     difficulty: 2,
                     prerequisites: ["ai_introduction", "ml_introduction"],
@@ -646,6 +605,7 @@ const COURSE_DATA = {
                     subtitle: "Linear Algebra, Calculus & Probability for ML (Optional)",
                     level: "beginner",
                     number: 5,
+                    tracks: { builder: "optional", researcher: "required", leader: "optional" },
                     estimatedTime: 60,
                     difficulty: 1,
                     prerequisites: [],

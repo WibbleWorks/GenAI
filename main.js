@@ -12,6 +12,8 @@ class AICourse {
         this.strengths = [];
         this.timeSpent = 0;
         this.confidenceLevels = {};
+        this.labChecksPassed = {}; // P1: {lessonId: [checkId]} persisted like scores
+        this.capstonesSubmitted = {}; // P2: {capstoneId: {selfScore, link, date}}
         this.startTime = Date.now();
         
         // DOM elements
@@ -36,7 +38,7 @@ class AICourse {
         this.init();
     }
     
-    init() {
+    async init() {
         console.log('Initializing Generative AI & ML Course...');
 
         // Get DOM elements
@@ -50,8 +52,22 @@ class AICourse {
         this.avgScoreEl = document.getElementById('avgScore');
         this.confidenceLevelEl = document.getElementById('confidenceLevel');
 
-        // Load course data
+        // Load course data (P5: overlay JSON lessons first — JSON wins).
         this.loadCourseData();
+        try {
+            if (window.courseDataReady) {
+                const jsonLessons = await window.courseDataReady;
+                if (jsonLessons && jsonLessons.length && window.applyJsonLessons) {
+                    const res = window.applyJsonLessons(this.courseData, jsonLessons);
+                    console.log(`[loader] JSON overlay applied: ${res.applied.length} lessons` +
+                        (res.missing.length ? ` (ignored unknown: ${res.missing.join(',')})` : ''));
+                    // Overlay mutates the shared COURSE_DATA object in place;
+                    // this.courseData already sees it (same reference).
+                }
+            }
+        } catch (e) {
+            console.warn('[loader] JSON overlay skipped, inline fallback:', e.message);
+        }
 
         // Initialize systems
         this.animations = window.animations || null;
@@ -169,14 +185,14 @@ class AICourse {
                     </label>
                     <label style="padding: 0.75rem; background: var(--surface-light); border-radius: 8px; border: 2px solid transparent; cursor: pointer;">
                         <input type="radio" name="path" value="leader" style="margin-bottom: 0.4rem;">
-                        <strong>📊 Leader</strong>
+                        <strong>📊 Manager</strong>
                         <div style="font-size: 0.75rem; color: var(--text-muted);">Eval-first. Ethics → Eval → RAG → MLOps. Strategy + decisions, less code.</div>
                     </label>
                 </div>
 
                 <h3 style="color: var(--text-primary); font-size: 0.95rem; margin: 1rem 0 0.5rem;">2. Already know the foundations?</h3>
                 <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.75rem;">
-                    Take a 5-question placement test to skip Lessons 1-5 (pass at 60%).
+                    Take a placement test to skip Lessons 1-5 (5 core questions, pass at 60%, + 1 track bonus).
                 </p>
                 <div style="display: flex; gap: 0.75rem;">
                     <button class="btn-primary" id="placementStart" style="flex: 1;">📋 Take placement test</button>
@@ -213,10 +229,9 @@ class AICourse {
         });
     }
 
-    // T5.4 - Persist the learning path. We don't reorder lessons yet (Phase 11
-    // work); we DO show a path badge in the header and persist it so the
-    // choice survives reload. The recommended next-lesson from each path is
-    // surfaced in the activity log so first-time users get a clear next step.
+    // Persist the learning path + badge. P3: Next-Lesson skips lessons optional
+    // for the path (getAdjacentLessons) and the sidebar tags them; content is
+    // never forked. 'leader' id displays as Manager (PLAN D-track).
     setLearningPath(path) {
         const valid = ['builder', 'researcher', 'leader'];
         if (!valid.includes(path)) path = 'builder';
@@ -224,7 +239,7 @@ class AICourse {
         try { localStorage.setItem('aiCourseLearningPath', path); } catch (e) { /* quota */ }
 
         // Show a path badge in the header next to the progress text
-        const labels = { builder: '🔧 Builder', researcher: '🔬 Researcher', leader: '📊 Leader' };
+        const labels = { builder: '🔧 Builder', researcher: '🔬 Researcher', leader: '📊 Manager' };
         let badge = document.getElementById('pathBadge');
         if (!badge) {
             badge = document.createElement('span');
@@ -233,7 +248,6 @@ class AICourse {
             const progress = document.querySelector('.progress-container');
             if (progress) progress.appendChild(badge);
         }
-        badge.textContent = labels[path] || labels.builder;
 
         // Recommended first lesson per path
         const startByPath = {
@@ -253,7 +267,7 @@ class AICourse {
         let path = 'builder';
         try { path = localStorage.getItem('aiCourseLearningPath') || 'builder'; } catch (e) { /* quota */ }
         this.learningPath = path;
-        const labels = { builder: '🔧 Builder', researcher: '🔬 Researcher', leader: '📊 Leader' };
+        const labels = { builder: '🔧 Builder', researcher: '🔬 Researcher', leader: '📊 Manager' };
         let badge = document.getElementById('pathBadge');
         if (!badge) {
             badge = document.createElement('span');
@@ -262,7 +276,7 @@ class AICourse {
             const progress = document.querySelector('.progress-container');
             if (progress) progress.appendChild(badge);
         }
-        badge.textContent = labels[path] || labels.builder;
+        this.updatePathBadge();
     }
 
     // The placement test draws one question from each of the 5 Foundations
@@ -281,6 +295,49 @@ class AICourse {
         }
         if (questions.length === 0) return;
 
+        // P3: one track-specific bonus question. Scored separately as a track
+        // signal — it never affects the 60% pass/fail on the core five.
+        const BONUS = {
+            builder: {
+                id: 'qb', type: 'multiple-choice', concept: 'Debugging',
+                question: 'This snippet fails: model.fit(X_train) with an error about y. What is wrong?',
+                options: [
+                    { text: 'fit needs both features and labels: model.fit(X_train, y_train)', isCorrect: true },
+                    { text: 'The model needs more data', isCorrect: false },
+                    { text: 'Wrong model class entirely', isCorrect: false },
+                    { text: 'Features must be scaled first', isCorrect: false }
+                ],
+                explanation: 'Supervised fit takes (X, y). The error names the missing labels.',
+                difficulty: 2
+            },
+            researcher: {
+                id: 'qb', type: 'multiple-choice', concept: 'Gradients',
+                question: 'For L(w) = (w-3)^2, gradient descent w -= lr*2(w-3) from w=0 with a small lr converges to?',
+                options: [
+                    { text: '3 (the minimum)', isCorrect: true },
+                    { text: '0 (the start)', isCorrect: false },
+                    { text: 'It diverges', isCorrect: false },
+                    { text: '-3', isCorrect: false }
+                ],
+                explanation: 'The gradient 2(w-3) is zero at w=3, the unique minimum.',
+                difficulty: 2
+            },
+            leader: {
+                id: 'qb', type: 'multiple-choice', concept: 'Slice triage',
+                question: 'Model: 95% overall accuracy but 60% on one customer segment. First move?',
+                options: [
+                    { text: 'Hold the launch; investigate the slice (data, labels, impact) before shipping', isCorrect: true },
+                    { text: 'Ship — 95% overall is enough', isCorrect: false },
+                    { text: 'Delete the segment from eval', isCorrect: false },
+                    { text: 'Collect more random data', isCorrect: false }
+                ],
+                explanation: 'Aggregate metrics hide slice failures (Lesson 4). Diagnose before deciding.',
+                difficulty: 2
+            }
+        };
+        const bonusQ = { ...(BONUS[this.learningPath] || BONUS.builder), bonus: true };
+        questions.push(bonusQ);
+
         const overlay = document.createElement('div');
         overlay.id = 'placementTest';
         overlay.style.cssText = `
@@ -295,7 +352,7 @@ class AICourse {
         const render = () => {
             let body = `<div style="background: var(--surface-color); border-radius: 12px; padding: 2rem; max-width: 640px; width: 100%;">`;
             body += `<h2 style="color: var(--ai-blue); margin-bottom: 0.5rem;">📋 Placement Test</h2>`;
-            body += `<p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">${total} questions, pass at ${passingScore}% to skip Foundations.</p>`;
+            body += `<p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">5 core questions + 1 ${this.learningPath || 'builder'}-track bonus (signal only). Pass at ${passingScore}% on the core five to skip Foundations.</p>`;
             questions.forEach((q, qi) => {
                 body += `<div style="margin: 1.25rem 0; padding: 1rem; background: var(--surface-light); border-radius: 8px;">`;
                 body += `<p style="font-weight: 600; margin-bottom: 0.75rem;">Q${qi + 1}. ${q.question}</p>`;
@@ -331,10 +388,15 @@ class AICourse {
                     alert('Please answer all questions before submitting.');
                     return;
                 }
-                let correct = 0;
-                questions.forEach((q, qi) => { if (q.options[answers[qi]].isCorrect) correct++; });
-                const score = Math.round((correct / total) * 100);
-                this.scorePlacementTest(score, correct, total, passingScore, foundationsIds);
+                // P3: pass/fail on the core five only; bonus is a track signal.
+                let correct = 0, bonusCorrect = false;
+                questions.forEach((q, qi) => {
+                    if (q.bonus) { bonusCorrect = q.options[answers[qi]].isCorrect; return; }
+                    if (q.options[answers[qi]].isCorrect) correct++;
+                });
+                const coreTotal = total - 1;
+                const score = Math.round((correct / coreTotal) * 100);
+                this.scorePlacementTest(score, correct, coreTotal, passingScore, foundationsIds, bonusCorrect);
                 overlay.remove();
             });
             overlay.querySelector('#placementCancel')?.addEventListener('click', () => overlay.remove());
@@ -345,7 +407,7 @@ class AICourse {
 
     // On pass, mark all Foundations lessons complete with a synthetic 100%
     // score so the rest of the course's prereq gating opens up.
-    scorePlacementTest(score, correct, total, passingScore, foundationsIds) {
+    scorePlacementTest(score, correct, total, passingScore, foundationsIds, bonusCorrect) {
         const passed = score >= passingScore;
         const overlay = document.createElement('div');
         overlay.style.cssText = `
@@ -363,6 +425,7 @@ class AICourse {
                     ${passed
                         ? 'Foundations (Lessons 1-5) marked complete. Jump to Lesson 6.'
                         : 'You need 60% to skip Foundations. Start from Lesson 1 - you can retake the test any time from the nav header.'}
+                    <br><span style="font-size: 0.85rem; color: var(--text-muted);">Track bonus (${this.learningPath || 'builder'}): ${bonusCorrect ? 'correct ✓' : 'missed'} — signal only, not scored.</span>
                 </p>
                 <button class="btn-primary" id="placementDone" style="width: 100%;">${passed ? 'Jump to Lesson 6' : 'Start from Lesson 1'}</button>
             </div>
@@ -380,9 +443,9 @@ class AICourse {
             this.saveProgress();
             this.updateNavigation();
             this.updateProgress();
-            this.logActivity(`Placement test passed (${score}%); Foundations marked complete`);
+            this.logActivity(`Placement test passed (${score}%, bonus ${bonusCorrect ? 'correct' : 'missed'}); Foundations marked complete`);
         } else {
-            this.logActivity(`Placement test failed (${score}%); starting from Lesson 1`);
+            this.logActivity(`Placement test failed (${score}%, bonus ${bonusCorrect ? 'correct' : 'missed'}); starting from Lesson 1`);
         }
 
         overlay.querySelector('#placementDone')?.addEventListener('click', () => {
@@ -433,6 +496,18 @@ class AICourse {
                 this.timeSpent = progress.timeSpent || 0;
                 this.confidenceLevels = progress.confidenceLevels || {};
                 this.currentLessonId = progress.currentLessonId || null;
+                this.labChecksPassed = progress.labChecksPassed || {};
+                this.capstonesSubmitted = progress.capstonesSubmitted || {};
+                // Absent key = save written before the P2 gate existed (grandfather path).
+                this._loadedWithoutCapstoneKey = !('capstonesSubmitted' in progress);
+                // P5: schema version + id aliases. v1 saves predate the field.
+                this.progressVersion = progress.version || 1;
+                const aliases = { quantum_ai_intersection: 'frontier_map' };
+                for (const [oldId, newId] of Object.entries(aliases)) {
+                    if (this.completedLessons.has(oldId) && this.findLesson(newId)) {
+                        this.completedLessons.add(newId);
+                    }
+                }
                 console.log('Progress loaded:', progress);
             }
         } catch (e) {
@@ -443,13 +518,16 @@ class AICourse {
     saveProgress() {
         try {
             const progress = {
+                version: 2, // P5: progress schema version (migrations in loadProgress)
                 completedLessons: Array.from(this.completedLessons),
                 scores: this.scores,
                 weakAreas: this.weakAreas,
                 timeSpent: this.timeSpent,
                 confidenceLevels: this.confidenceLevels,
                 currentLessonId: this.currentLessonId,
-                learningPath: this.learningPath
+                learningPath: this.learningPath,
+                labChecksPassed: this.labChecksPassed,
+                capstonesSubmitted: this.capstonesSubmitted
             };
             localStorage.setItem('aiCourseProgress', JSON.stringify(progress));
             // Also push to Supabase if the user is logged in (auth.js)
@@ -670,10 +748,16 @@ class AICourse {
                     if (isCurrent) classes += ' active';
                     if (!isUnlocked) classes += ' locked';
                     
+                    // P3: dim + tag lessons optional for the current track
+                    const trackNote = this.trackStatus(lesson) === 'optional'
+                        ? '<span class="track-tag" title="Optional for your current track">· optional</span>' : '';
+                    if (trackNote) classes += ' track-optional';
+
                     html += `
                         <li class="${classes}" data-lesson="${lesson.id}" tabindex="0" aria-label="${isUnlocked ? 'Open lesson' : 'Locked lesson'}: ${lesson.number}. ${lesson.title}">
                             <span class="nav-indicator" aria-hidden="true"></span>
                             <span class="lesson-title">${lesson.number}. ${lesson.title}</span>
+                            ${trackNote}
                             ${lesson.level ? `<span class="level-badge ${lesson.level}">${lesson.level.toUpperCase()}</span>` : ''}
                         </li>
                     `;
@@ -775,6 +859,16 @@ class AICourse {
             window.mountInteractiveLabs(this.lessonContainer);
         }
 
+        // Mount autograded labChecks placeholders (P1)
+        if (window.mountLabChecks) {
+            window.mountLabChecks(this.lessonContainer);
+        }
+
+        // Mount capstone submission widgets (P2)
+        if (window.mountCapstoneSubmit) {
+            window.mountCapstoneSubmit(this.lessonContainer);
+        }
+
         // Start animation if specified
         if (lesson.animation) {
             this.startAnimation(lessonId);
@@ -804,20 +898,51 @@ class AICourse {
         this.logActivity(`Started lesson: ${lesson.title}`);
     }
 
-    // Return the previous and next lessons in level order, ignoring the lesson itself
-    getAdjacentLessons(lessonId) {
+    // P3: track emphasis for a lesson under the current path.
+    // Missing tracks metadata (old saves/tests) defaults to recommended.
+    trackStatus(lesson) {
+        const path = this.learningPath || 'builder';
+        if (!lesson || !lesson.tracks) return 'recommended';
+        return lesson.tracks[path] || 'recommended';
+    }
+
+    // Flat lesson order shared by nav + track-route walking (P3).
+    flatLessons() {
         const levelOrder = ['beginner', 'intermediate', 'advanced', 'expert', 'research'];
         const flat = [];
         levelOrder.forEach(levelKey => {
             const level = this.courseData.levels[levelKey];
             if (!level || !level.lessons) return;
-            // Preserve insertion order of lessons within a level
             Object.values(level.lessons).forEach(l => flat.push(l));
         });
+        return flat;
+    }
+
+    // Required-lesson route for a path: flat order minus optionals (P3).
+    trackRoute(path) {
+        const saved = this.learningPath;
+        this.learningPath = path;
+        const route = this.flatLessons().filter(l => this.trackStatus(l) !== 'optional');
+        this.learningPath = saved;
+        return route;
+    }
+
+    // Return the previous and next lessons. Next skips lessons optional for
+    // the current path (P3 track sequencing); prev stays adjacent so learners
+    // can always step back. Same content, different order — never a fork.
+    getAdjacentLessons(lessonId) {
+        const flat = this.flatLessons();
         const idx = flat.findIndex(l => l.id === lessonId);
+        let next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
+        if (next && this.trackStatus(next) === 'optional') {
+            const route = this.trackRoute(this.learningPath || 'builder').map(l => l.id);
+            const pos = route.indexOf(lessonId);
+            const nextId = pos >= 0 && pos < route.length - 1 ? route[pos + 1] : null;
+            next = nextId ? flat.find(l => l.id === nextId) || null : null;
+        }
         return {
             prev: idx > 0 ? flat[idx - 1] : null,
-            next: idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null
+            next
         };
     }
     
@@ -954,6 +1079,21 @@ class AICourse {
         if (this.masteredTopicsEl) {
             this.masteredTopicsEl.textContent = mastered;
         }
+
+        // P3: path badge shows required-lesson progress for the current track
+        this.updatePathBadge();
+    }
+
+    // P3: "🔧 Builder · 5/14 required" — recomputed on every progress update.
+    updatePathBadge() {
+        const labels = { builder: '🔧 Builder', researcher: '🔬 Researcher', leader: '📊 Manager' };
+        const path = this.learningPath || 'builder';
+        const badge = document.getElementById('pathBadge');
+        if (!badge) return;
+        const route = this.courseData ? this.trackRoute(path) : [];
+        const required = route.filter(l => (l.tracks ? l.tracks[path] : 'required') === 'required');
+        const done = required.filter(l => this.completedLessons.has(l.id)).length;
+        badge.textContent = `${labels[path] || labels.builder} · ${done}/${required.length} required`;
     }
     
     markLessonComplete(lessonId, score, weakConcepts = []) {
@@ -988,6 +1128,40 @@ class AICourse {
         if (allLessons.length > 0 && allLessons.every(id => this.completedLessons.has(id))) {
             this.completeCourse();
         }
+    }
+
+    // P2: record a capstone self-assessment submission. Persisted via saveProgress.
+    markCapstoneSubmitted(capstoneId, selfScore, link) {
+        this.capstonesSubmitted[capstoneId] = {
+            selfScore, link, date: new Date().toISOString().slice(0, 10)
+        };
+        this.logActivity(`Submitted capstone: ${capstoneId} self-score ${selfScore}/20`);
+        this.saveProgress();
+        // Refresh the widget in place
+        const mount = document.querySelector(`[data-capstone-submit="${capstoneId}"]`);
+        if (mount) {
+            mount.dataset.mounted = '0';
+            if (window.mountCapstoneSubmit) window.mountCapstoneSubmit(this.lessonContainer);
+        }
+    }
+
+    // P2: portfolio gate. 3/3 submissions required for the Portfolio-Complete
+    // badge. Grandfathered when an old save (no capstonesSubmitted key) already
+    // completed every lesson before this gate existed.
+    capstoneGate() {
+        const ids = ['rag-chatbot', 'finetune-slm', 'agent-tools'];
+        const done = ids.filter(id => this.capstonesSubmitted[id]);
+        return { ids, done, missing: ids.filter(id => !this.capstonesSubmitted[id]) };
+    }
+
+    // P1: record a passed autograded check. Idempotent; persisted via saveProgress.
+    markLabCheckPassed(lessonId, checkId) {
+        if (!this.labChecksPassed[lessonId]) this.labChecksPassed[lessonId] = [];
+        if (!this.labChecksPassed[lessonId].includes(checkId)) {
+            this.labChecksPassed[lessonId].push(checkId);
+            this.logActivity(`Passed lab check: ${lessonId}/${checkId}`);
+        }
+        this.saveProgress();
     }
 
     getAllLessonIds() {
@@ -1128,6 +1302,8 @@ class AICourse {
         this.timeSpent = 0;
         this.confidenceLevels = {};
         this.currentLessonId = null;
+        this.labChecksPassed = {};
+        this.capstonesSubmitted = {};
 
         this.saveProgress();
         location.reload();
@@ -1158,10 +1334,24 @@ class AICourse {
         
         if (modal && message && finalScore && timeSpentEl && topicsMastered && weakAreasList) {
             if (progress >= 100) {
-                message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
-                    Congratulations! You've completed the entire AI & ML course from 101 to PhD level!<br>
-                    You now have a comprehensive understanding of AI, ML, and Generative AI principles and applications.
-                </p>`;
+                const gate = this.capstoneGate();
+                // Grandfather: saves predating the gate (key absent) with every
+                // lesson already done keep the full badge without resubmitting.
+                const preGateSave = this._loadedWithoutCapstoneKey && gate.done.length === 0;
+                if (gate.missing.length === 0 || preGateSave) {
+                    message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
+                        Congratulations! You've completed the entire AI & ML course from 101 to PhD level!<br>
+                        You now have a comprehensive understanding of AI, ML, and Generative AI principles and applications.
+                        ${gate.missing.length === 0 ? '<br>🏅 <strong>Portfolio-Complete:</strong> all 3 capstones submitted.' : ''}
+                    </p>`;
+                } else {
+                    message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
+                        Lessons complete — ${gate.done.length}/3 capstones submitted.<br>
+                        Submit the portfolio capstones to earn the <strong>Portfolio-Complete</strong> badge:
+                        missing ${gate.missing.join(', ')}.<br>
+                        Open each capstone lesson and use the submission widget.
+                    </p>`;
+                }
             } else if (progress >= 50) {
                 message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
                     Great progress! You've completed ${progress}% of the course.<br>

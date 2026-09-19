@@ -167,5 +167,10 @@
       "generateBiasData",
       "adjustBiasThresholds"
     ]
+  },
+  "tracks": {
+    "builder": "required",
+    "researcher": "required",
+    "leader": "required"
   }
 }

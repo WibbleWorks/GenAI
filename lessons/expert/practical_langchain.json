@@ -164,5 +164,10 @@
       "generateToken",
       "showProbabilities"
     ]
+  },
+  "tracks": {
+    "builder": "required",
+    "researcher": "recommended",
+    "leader": "recommended"
   }
 }
