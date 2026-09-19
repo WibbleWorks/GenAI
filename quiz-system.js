@@ -152,7 +152,7 @@ class QuizSystem {
             // Update question (use the shuffled question for this slot)
             questionElement.innerHTML = `
                 <h3>${question.question}</h3>
-                ${question.type === 'multiple-choice' ? '' : ''}
+                ${question.type === 'mcq-code' ? '<span style="font-size: 0.75rem; color: var(--text-muted);">🧪 code-reading</span>' : ''}
             `;
 
             // Update progress

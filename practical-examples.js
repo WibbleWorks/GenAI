@@ -934,6 +934,33 @@ print(f"Model Accuracy: {accuracy:.2f}")
                 output.innerHTML = '<span style="color: var(--ai-red);">Error:</span> ' + error.message;
             }
         }
+
+        // Run userCode with assertCode appended (P1 autograded labChecks).
+        // The assertCode must print LABCHECK_PASS as its last statement when
+        // every assert holds; any exception means FAIL. Returns PASS/FAIL.
+        async checkCode(userCode, assertCode) {
+            const combined = (userCode || '') + '\n\n# --- autograder asserts (do not edit) ---\n' + (assertCode || '');
+            if (this._usesUnsupported(combined)) {
+                return { success: false, mode: 'preview', output: 'This check needs a package Pyodide cannot run in-browser. Use Open in Colab.' };
+            }
+            const py = await this.loadPyodide();
+            if (!py) {
+                return { success: false, mode: 'preview', output: 'Pyodide runtime unavailable (offline?). Reconnect and retry, or use Open in Colab.' };
+            }
+            const out = { text: '' };
+            py.setStdout({ batched: (s) => { out.text += s; } });
+            py.setStderr({ batched: (s) => { out.text += s; } });
+            try {
+                await py.runPythonAsync(combined);
+                const text = (out.text || '');
+                if (text.includes('LABCHECK_PASS')) {
+                    return { success: true, mode: 'pyodide', output: '✓ PASS — ' + text.trim().split('\n').filter(l => l && l !== 'LABCHECK_PASS').join('\n') };
+                }
+                return { success: false, mode: 'pyodide-error', output: 'Check ran but did not print LABCHECK_PASS. An assert may have been deleted — restore the asserts section.' };
+            } catch (e) {
+                return { success: false, mode: 'pyodide-error', output: '✗ FAIL\n' + (e.message || e) };
+            }
+        }
     }
 
     window.aiLab = new AILab();
@@ -985,6 +1012,82 @@ print(f"Model Accuracy: {accuracy:.2f}")
             </div>
         `;
     }
+
+    // Render autograded labChecks into a lesson. Call from a lesson's content
+    // as ${renderLabChecks('lesson_id')} — the checks themselves are read from
+    // COURSE_DATA at mount time (P1), so content templates stay declarative.
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function renderLabChecks(lessonId) {
+        return `<div class="labchecks-mount" data-labchecks="${lessonId}"></div>`;
+    }
+
+    // After a lesson is rendered, resolve each [data-labchecks] placeholder
+    // against COURSE_DATA and inject the check cards. Called from main.js
+    // showLesson alongside mountInteractiveLabs.
+    window.mountLabChecks = function(container) {
+        const mounts = (container || document).querySelectorAll('[data-labchecks]');
+        mounts.forEach(mount => {
+            if (mount.dataset.mounted === '1') return;
+            const lessonId = mount.dataset.labchecks;
+            const lesson = window.course ? window.course.findLesson(lessonId) : null;
+            const checks = (lesson && lesson.labChecks) || [];
+            if (!checks.length) { mount.dataset.mounted = '1'; return; }
+            mount.innerHTML = `
+                <div class="lesson-section">
+                    <h3>🧪 Graded Checks (run in your browser)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Complete the TODO in each exercise and click <strong>Check</strong>. Passing is saved to your progress.</p>
+                    ${checks.map((c, i) => `
+                    <div class="labcheck" id="labcheck-${lessonId}-${c.id}" style="margin: 1rem 0; padding: 1rem; background: var(--surface-light); border-radius: 8px; border: 1px solid var(--border-color);">
+                        <p style="margin-bottom: 0.5rem;"><strong>${i + 1}. ${escapeHtml(c.prompt.split('\n')[0])}</strong>
+                        <span class="labcheck-badge" style="font-size: 0.75rem; color: var(--text-muted);"></span></p>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); white-space: pre-wrap;">${escapeHtml(c.prompt)}</p>
+                        ${(c.kind === 'pyodide-assert') ? `
+                        <textarea id="labcheck-code-${lessonId}-${c.id}" aria-label="Exercise code editor" style="width: 100%; height: 180px; padding: 0.75rem; font-family: monospace; font-size: 0.8rem; background: var(--code-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; resize: vertical;">${escapeHtml(c.starterCode || '')}</textarea>
+                        <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-small" onclick="runLabCheck('${lessonId}', '${c.id}')" aria-label="Run check" style="padding: 0.25rem 0.75rem;">▶ Check</button>
+                        </div>
+                        <div class="labcheck-output" style="margin-top: 0.5rem; padding: 0.75rem; background: var(--surface-color); border-radius: 4px; min-height: 2rem; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap;"><span style="color: var(--text-muted);">Result will appear here…</span></div>
+                        ` : `
+                        <p style="font-size: 0.85rem;">Kind <code>${escapeHtml(c.kind)}</code>: copy the starter into Colab, run the asserts there, and self-report. In-browser execution for this check lands with the P5 codeblocks CI.</p>
+                        ${(c.starterCode) ? `<pre style="padding: 0.75rem; background: var(--code-bg); border-radius: 4px; overflow-x: auto; font-size: 0.8rem;" tabindex="0" role="region" aria-label="Code block">${escapeHtml(c.starterCode)}</pre>` : ''}
+                        `}
+                    </div>`).join('')}
+                </div>`;
+            mount.dataset.mounted = '1';
+            // Restore PASS badges for already-passed checks
+            if (window.course && window.course.labChecksPassed && window.course.labChecksPassed[lessonId]) {
+                window.course.labChecksPassed[lessonId].forEach(cid => {
+                    const card = mount.querySelector(`#labcheck-${lessonId}-${cid} .labcheck-badge`);
+                    if (card) card.textContent = '✓ passed';
+                });
+            }
+        });
+    };
+
+    // Run a single pyodide-assert check from its card. Exposed for inline onclick.
+    window.runLabCheck = async function(lessonId, checkId) {
+        const lesson = window.course ? window.course.findLesson(lessonId) : null;
+        const check = lesson && lesson.labChecks ? lesson.labChecks.find(c => c.id === checkId) : null;
+        const card = document.getElementById(`labcheck-${lessonId}-${checkId}`);
+        const out = card ? card.querySelector('.labcheck-output') : null;
+        const editor = document.getElementById(`labcheck-code-${lessonId}-${checkId}`);
+        if (!check || !out || !editor) return;
+        out.innerHTML = '<span style="color: var(--ai-orange);">⏳ Running check (first run loads Pyodide)…</span>';
+        try {
+            const result = await window.aiLab.checkCode(editor.value, check.assertCode);
+            const color = result.success ? 'var(--ai-green)' : 'var(--ai-red)';
+            out.innerHTML = `<span style="color: ${color};">` + escapeHtml(result.output) + '</span>';
+            if (result.success && window.course) {
+                window.course.markLabCheckPassed(lessonId, checkId);
+                const badge = card.querySelector('.labcheck-badge');
+                if (badge) badge.textContent = '✓ passed';
+            }
+        } catch (e) {
+            out.innerHTML = '<span style="color: var(--ai-red);">Error: ' + escapeHtml(e.message || e) + '</span>';
+        }
+    };
 
     // After a lesson is rendered, find any .interactive-lab-mount placeholders
     // and inject the real lab HTML. Called from main.js showLesson.
@@ -1186,6 +1289,7 @@ with open('titanic_model.pkl', 'rb') as f:
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('practical_scikit')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -1276,7 +1380,30 @@ with open('titanic_model.pkl', 'rb') as f:
             title: "scikit-learn Workflow",
             description: "Visualize the complete scikit-learn workflow.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "sklearn_stratified_split",
+                kind: "pyodide-assert",
+                prompt: "Fix the split: keep every class at 10 test samples\nThe starter splits iris 80/20 without stratify, so class shares drift. Add stratify=y (keep random_state=42) so each of the 3 classes keeps exactly 10 of the 30 test rows.",
+                starterCode: `from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+X, y = load_iris(return_X_y=True)
+# TODO: split 80/20 with random_state=42 AND stratify=y so every
+# class keeps exactly 10 test samples.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)`,
+                assertCode: `import numpy as np
+assert len(y_test) == 30, f"expected 30 test rows, got {len(y_test)}"
+counts = sorted(np.bincount(y_test, minlength=3).tolist())
+assert counts == [10, 10, 10], f"class counts in test are {counts}, want [10, 10, 10] — did you forget stratify=y?"
+print("stratified split keeps all 3 classes at 10/10/10")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
     
     // Intermediate Level (Level 2) -- Tier-1 content: MLOps basics
@@ -2153,6 +2280,7 @@ for text, score in ranked:
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('embeddings')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2233,7 +2361,34 @@ for text, score in ranked:
             title: "Embedding Space Clusters",
             description: "Visualize how similar items cluster in embedding space.",
             controls: ["changeClustering", "addClusterPoint", "runClustering"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "cosine_ordering",
+                kind: "pyodide-assert",
+                prompt: "Implement cosine similarity\nFill in cosine_sim(a, b) = (a.b)/(|a|*|b|). It must score 1 for identical vectors, 0 for orthogonal ones, -1 for opposites, ignore magnitude, and rank the nearer vector first.",
+                starterCode: `import numpy as np
+
+# TODO: implement cosine similarity between 1-D vectors a and b.
+# cos(a, b) = (a . b) / (|a| * |b|), in [-1, 1].
+def cosine_sim(a, b):
+    raise NotImplementedError("implement cosine similarity")`,
+                assertCode: `import numpy as np
+assert cosine_sim([1, 0], [0, 1]) == 0.0, "orthogonal vectors must score 0"
+assert abs(cosine_sim([1, 1], [1, 1]) - 1.0) < 1e-9, "identical vectors must score 1"
+assert abs(cosine_sim([1, 2, 3], [1, 2, 3]) - 1.0) < 1e-9
+assert abs(cosine_sim([1, 0], [-1, 0]) - (-1.0)) < 1e-9, "opposite vectors must score -1"
+assert abs(cosine_sim([1, 2], [2, 4]) - 1.0) < 1e-9, "cosine ignores magnitude"
+q = [1.0, 0.0]
+near, far = [0.9, 0.1], [0.1, 0.9]
+assert cosine_sim(q, near) > cosine_sim(q, far), "nearer vector must rank first"
+print("cosine similarity orders vectors correctly")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -2633,6 +2788,7 @@ print(out.content)
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('prompt_engineering')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2713,7 +2869,41 @@ print(out.content)
             title: "Prompt Playground",
             description: "Type a prompt and watch tokens get generated.",
             controls: ["generateToken", "showProbabilities"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "json_schema_guard",
+                kind: "pyodide-assert",
+                prompt: "Build a JSON guard for LLM output\nImplement extract_json(text): return the parsed object when the text holds exactly one JSON object with keys answer + citations, else raise ValueError.",
+                starterCode: `import json
+
+# TODO: implement extract_json(text) -> dict.
+# Return the parsed object when text contains exactly one JSON object
+# with required keys {"answer", "citations"}; raise ValueError otherwise.
+def extract_json(text):
+    raise NotImplementedError("implement me")`,
+                assertCode: `good = 'Here is the result: {"answer": "Paris", "citations": ["doc1"]} done.'
+obj = extract_json(good)
+assert obj == {"answer": "Paris", "citations": ["doc1"]}, f"wrong parse: {obj}"
+for bad in [
+    "no json here",
+    '{"answer": "Paris"}',
+    '{"answer": 1} {"answer": 2}',
+    '{"answer": "x", "citations": }',
+]:
+    try:
+        extract_json(bad)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(f"should have raised ValueError for: {bad!r}")
+print("JSON guard accepts valid output, rejects the rest")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -2895,6 +3085,7 @@ print(answer)
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('rag_vector_databases')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -2973,9 +3164,35 @@ print(answer)
         animation: {
             type: "ml-workflow",
             title: "RAG Pipeline Walkthrough",
-            description: "Walk through the RAG pipeline: chunk -> embed -> retrieve -> rerank -> generate.",
+            description: "Walk through the RAG pipeline: chunk -> embed -> retrieve -> rerank -> cite -> serve -> eval.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "chunk_overlap",
+                kind: "pyodide-assert",
+                prompt: "Implement overlapping chunks with no gaps\nFill in chunk_text(text, size, overlap): sliding windows of at most size chars, consecutive chunks sharing exactly overlap chars, covering the text with no gaps.",
+                starterCode: `# TODO: implement chunk_text(text, size, overlap) -> list[str].
+# Sliding window: chunks of at most size chars, consecutive chunks
+# share exactly overlap chars. No gaps, no empty chunks.
+def chunk_text(text, size, overlap):
+    raise NotImplementedError("implement me")`,
+                assertCode: `text = "abcdefghij" * 10  # 100 chars
+chunks = chunk_text(text, 30, 10)
+assert all(0 < len(c) <= 30 for c in chunks), f"chunk size violated: {[len(c) for c in chunks]}"
+assert len(chunks) == 5, f"expected 5 chunks for 100 chars size=30 overlap=10, got {len(chunks)}"
+for a, b in zip(chunks, chunks[1:]):
+    assert a[-10:] == b[:10], f"overlap mismatch: {a[-10:]!r} vs {b[:10]!r}"
+covered = chunks[0] + "".join(c[10:] for c in chunks[1:])
+assert covered == text, "chunks must cover the text with no gaps"
+assert chunk_text("", 30, 10) == [], "empty text -> no chunks"
+print("chunking covers the text with exact overlap")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // =========================================================================
@@ -3343,6 +3560,7 @@ def evaluate_pair(question, a, b, criterion="helpfulness"):
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('llm_evaluation')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -3423,7 +3641,32 @@ def evaluate_pair(question, a, b, criterion="helpfulness"):
             title: "Eval Loop",
             description: "Walk the eval loop: golden set -> automated metrics -> human review -> red-team -> drift monitoring.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P1 autograded checks (PLAN §1A). Verified: starter FAILS, solution PASSES.
+        labChecks: [
+            {
+                id: "faithfulness_scoring",
+                kind: "pyodide-assert",
+                prompt: "Score faithfulness like a mini-Ragas\nImplement faithfulness(claims, context): mean over claims of word-overlap fraction (case-insensitive). Must match the golden mini-set and be order-invariant.",
+                starterCode: `# TODO: implement faithfulness(answer_claims, context) -> float in [0, 1].
+# Each claim scores 1.0 if every word appears in the context (case-insensitive),
+# else the fraction of its words present. Return the mean over claims.
+def faithfulness(answer_claims, context):
+    raise NotImplementedError("implement me")`,
+                assertCode: `ctx = "the eiffel tower is in paris and was completed in 1889"
+assert faithfulness(["tower is in paris"], ctx) == 1.0
+assert faithfulness(["tower is in mars"], ctx) == 0.75, "3 of 4 words present"
+assert faithfulness(["mars venus jupiter"], ctx) == 0.0
+assert faithfulness(["tower is in paris", "mars venus jupiter"], ctx) == 0.5
+a = ["tower is in paris", "completed in 1889"]
+b = ["completed in 1889", "tower is in paris"]
+assert faithfulness(a, ctx) == faithfulness(b, ctx), "order must not change the score"
+print("faithfulness metric matches the golden mini-set")
+print("LABCHECK_PASS")`,
+                points: 2
+            }
+        ]
     };
 
     // Expert Level (Level 4) -- existing practical LangChain lesson

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-19T20:14:51.641Z",
+  "generated": "2026-09-19T20:40:54.641Z",
   "count": 21,
   "lessons": [
     {
@@ -42,7 +42,7 @@
       "level": "intermediate",
       "number": 6,
       "path": "lessons/intermediate/practical_scikit.json",
-      "hash": "c43651e83745090a"
+      "hash": "68770d092d5f84c4"
     },
     {
       "id": "mlops_basics",
@@ -70,7 +70,7 @@
       "level": "advanced",
       "number": 10,
       "path": "lessons/advanced/embeddings.json",
-      "hash": "bfc9c8ee1cd04136"
+      "hash": "31a51adce19332f0"
     },
     {
       "id": "transfer_learning",
@@ -84,14 +84,14 @@
       "level": "expert",
       "number": 12,
       "path": "lessons/expert/prompt_engineering.json",
-      "hash": "68579088409678ac"
+      "hash": "98267c958894e58c"
     },
     {
       "id": "rag_vector_databases",
       "level": "expert",
       "number": 13,
       "path": "lessons/expert/rag_vector_databases.json",
-      "hash": "8266cffa46a25e34"
+      "hash": "8f28eed361d86878"
     },
     {
       "id": "fine_tuning_peft",
@@ -105,7 +105,7 @@
       "level": "expert",
       "number": 15,
       "path": "lessons/expert/llm_evaluation.json",
-      "hash": "02016baca0425b73"
+      "hash": "98b2725a949fff36"
     },
     {
       "id": "practical_langchain",

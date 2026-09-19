@@ -12,6 +12,7 @@ class AICourse {
         this.strengths = [];
         this.timeSpent = 0;
         this.confidenceLevels = {};
+        this.labChecksPassed = {}; // P1: {lessonId: [checkId]} persisted like scores
         this.startTime = Date.now();
         
         // DOM elements
@@ -433,6 +434,7 @@ class AICourse {
                 this.timeSpent = progress.timeSpent || 0;
                 this.confidenceLevels = progress.confidenceLevels || {};
                 this.currentLessonId = progress.currentLessonId || null;
+                this.labChecksPassed = progress.labChecksPassed || {};
                 console.log('Progress loaded:', progress);
             }
         } catch (e) {
@@ -449,7 +451,8 @@ class AICourse {
                 timeSpent: this.timeSpent,
                 confidenceLevels: this.confidenceLevels,
                 currentLessonId: this.currentLessonId,
-                learningPath: this.learningPath
+                learningPath: this.learningPath,
+                labChecksPassed: this.labChecksPassed
             };
             localStorage.setItem('aiCourseProgress', JSON.stringify(progress));
             // Also push to Supabase if the user is logged in (auth.js)
@@ -775,6 +778,11 @@ class AICourse {
             window.mountInteractiveLabs(this.lessonContainer);
         }
 
+        // Mount autograded labChecks placeholders (P1)
+        if (window.mountLabChecks) {
+            window.mountLabChecks(this.lessonContainer);
+        }
+
         // Start animation if specified
         if (lesson.animation) {
             this.startAnimation(lessonId);
@@ -988,6 +996,16 @@ class AICourse {
         if (allLessons.length > 0 && allLessons.every(id => this.completedLessons.has(id))) {
             this.completeCourse();
         }
+    }
+
+    // P1: record a passed autograded check. Idempotent; persisted via saveProgress.
+    markLabCheckPassed(lessonId, checkId) {
+        if (!this.labChecksPassed[lessonId]) this.labChecksPassed[lessonId] = [];
+        if (!this.labChecksPassed[lessonId].includes(checkId)) {
+            this.labChecksPassed[lessonId].push(checkId);
+            this.logActivity(`Passed lab check: ${lessonId}/${checkId}`);
+        }
+        this.saveProgress();
     }
 
     getAllLessonIds() {
