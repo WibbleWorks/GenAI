@@ -2,6 +2,10 @@
 
 How we keep this course from drifting out of date. Points back to `CONTENT_ROADMAP.md` Tier 6.
 
+**Owner (P5):** repo maintainer (see `docs/RELEASE_NOTES.md` per-release owner line).
+The owner runs the quarterly audit and owns the codeblock-manifest pipeline.
+Unowned process = no process.
+
 ## Quarterly content audit (Roadmap T6.1)
 
 Every quarter, take a half-day pass:
@@ -18,15 +22,17 @@ Triggered by:
 - Major upstream release (LangChain minor, Qiskit major, new OpenAI embedding model)
 - A burst of "out-of-date" issues (`docs/CONTENT_ROADMAP.md` T6.3)
 
-## CI (Roadmap T6.2 + T6.5 + T6.6 + T6.7)
+## CI (Roadmap T6.2 + T6.5 + T6.6 + T6.7, plus P5)
 
-`.github/workflows/ci.yml` runs **5 jobs** on every push/PR to `main`:
+`.github/workflows/ci.yml` runs **7 jobs** on every push/PR to `main`:
 
-1. **Syntax** — `node --check` on all 5 JS source files.
+1. **Syntax** — `node --check` on all 6 JS source files (incl. `loader.js`).
 2. **Version-pin lint** — `scripts/lint-version-pinning.js` flags every `pip install foo` without a version specifier (currently 0 unpinned).
-3. **Schema validation** — `scripts/validate-lessons.mjs` validates all 21 lessons against `docs/lesson.schema.json` (zero-dependency, uses `vm.runInContext` with a DOM shim).
-4. **Smoke test** — `tests/smoke.mjs` boots the course headlessly (Playwright + chromium) and renders every lesson, runs every quiz end-to-end, starts every animation, and checks for console errors. Falls back to Node-only structure checks when Playwright isn't installed.
-5. **Accessibility audit** — `tests/a11y.mjs` runs axe-core (`@axe-core/playwright`) against 6 page states (initial load, 3 representative lessons, quiz in progress, mobile viewport). Currently passing with 0 serious/moderate/critical violations against WCAG 2.0/2.1 AA.
+3. **Schema validation** — `scripts/validate-lessons.mjs` validates all 21 core lessons + standalone quantum-course lessons against `docs/lesson.schema.json`.
+4. **Manifest check** — `scripts/extract-lessons.mjs --check` (hash drift + stale files) + `scripts/test-loader.mjs` (JSON overlay harness, incl. the ai_introduction pilot).
+5. **Codeblocks** — installs the pinned scientific floor, runs `scripts/smoke-labchecks.mjs` (starter FAILS / solution PASSES under real Python) + `scripts/smoke-codeblocks.mjs` (compiles + Pyodide-import safety).
+6. **Smoke test** — `tests/smoke.mjs` boots the course headlessly (Playwright + chromium), awaits the JSON overlay, renders every lesson (asserting the pilot lesson's content is non-empty), runs every quiz end-to-end, starts every animation, and checks for console errors. Falls back to Node-only structure checks when Playwright isn't installed.
+7. **Accessibility audit** — `tests/a11y.mjs` runs axe-core (`@axe-core/playwright`) against 6 page states (initial load, 3 representative lessons, quiz in progress, mobile viewport). Currently passing with 0 serious/moderate/critical violations against WCAG 2.0/2.1 AA.
 
 A PR that fails any of these doesn't ship.
 

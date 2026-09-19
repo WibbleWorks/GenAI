@@ -27,7 +27,7 @@ function ok(msg) { console.log('  ok:  ' + msg); }
 
 // -- 1. Syntax check every source file --------------------------------------
 console.log('\n[1/4] Syntax check');
-const JS_FILES = ['ai-animations.js', 'quiz-system.js', 'course-data.js', 'practical-examples.js', 'main.js'];
+const JS_FILES = ['ai-animations.js', 'quiz-system.js', 'course-data.js', 'practical-examples.js', 'main.js', 'loader.js'];
 for (const f of JS_FILES) {
     try { execSync(`node --check ${f}`, { stdio: 'pipe' }); ok(`${f} passes node --check`); }
     catch (e) { fail(`${f}: ${e.stderr?.toString() || e.message}`); }
@@ -95,7 +95,14 @@ if (!pw) {
         await page.goto(BASE_URL, { waitUntil: 'networkidle' });
 
         const summary = await page.evaluate(async () => {
-            const out = { lessons: 0, quizzes: 0, anims: 0, renderErrs: [], quizErrs: [], animErrs: [] };
+            // P5: wait for the JSON overlay (loader.js) before rendering anything.
+            if (window.courseDataReady) { try { await window.courseDataReady; } catch (e) { /* inline fallback */ } }
+            const out = { lessons: 0, quizzes: 0, anims: 0, renderErrs: [], quizErrs: [], animErrs: [], pilotContentChars: 0 };
+            // P5 pilot proof: ai_introduction ships without inline content and must
+            // render from lessons/beginner/ai_introduction.json via the loader.
+            const pilot = window.course.findLesson('ai_introduction');
+            out.pilotContentChars = pilot && pilot.content ? pilot.content.length : 0;
+            if (out.pilotContentChars < 1000) out.renderErrs.push(`ai_introduction: pilot content missing (${out.pilotContentChars} chars)`);
             const ids = [];
             for (const lvl of Object.values(COURSE_DATA.levels)) {
                 for (const id of Object.keys(lvl.lessons || {})) {

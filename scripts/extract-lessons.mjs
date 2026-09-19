@@ -63,42 +63,100 @@ const COURSE_DATA = ctx.COURSE_DATA;
 const outDir = resolve(ROOT, 'lessons');
 const levelOrder = ['beginner', 'intermediate', 'advanced', 'expert', 'research'];
 
+// P5 pilot: these lessons are JSON-only — inline body deleted, loader fills it.
+// The extractor must NEVER overwrite their JSON from inline (it would blank it).
+const PILOT_JSON_ONLY = new Set(['ai_introduction']);
+
+import { readdirSync, existsSync, readFileSync as readFs, unlinkSync } from 'node:fs';
+
+function buildOut(lvl, lesson) {
+    // Write the lesson as clean JSON (no JSDOM/window round-trip)
+    const out = {
+        id: lesson.id, title: lesson.title, subtitle: lesson.subtitle,
+        level: lesson.level, number: lesson.number,
+        estimatedTime: lesson.estimatedTime, difficulty: lesson.difficulty,
+        prerequisites: lesson.prerequisites,
+        // content is HTML — JSON wins for pilot lessons (inline deleted)
+        content: lesson.content,
+        concepts: lesson.concepts,
+        quiz: lesson.quiz,
+        animation: lesson.animation,
+    };
+    if (lesson.labChecks !== undefined) out.labChecks = lesson.labChecks;
+    if (lesson.tracks !== undefined) out.tracks = lesson.tracks;
+    if (lesson.capstone !== undefined) out.capstone = lesson.capstone;
+    return out;
+}
+
+const CHECK = process.argv.includes('--check');
 let count = 0;
-const manifest = [];
+// NOTE: no timestamp field — the manifest must be byte-deterministic so
+// re-running the extractor on unchanged content yields zero diff.
+const manifest = { count: 0, lessons: [] };
+const seenPaths = new Set();
 for (const lvl of levelOrder) {
     const lessons = COURSE_DATA.levels[lvl]?.lessons || {};
     const dir = join(outDir, lvl);
-    mkdirSync(dir, { recursive: true });
+    if (!CHECK) mkdirSync(dir, { recursive: true });
     for (const [id, lesson] of Object.entries(lessons)) {
-        // Write the lesson as clean JSON (no JSDOM/window round-trip)
-        // P0: carry optional PLAN fields when present so JSON stays source-of-truth-ready.
-        const out = {
-            id: lesson.id, title: lesson.title, subtitle: lesson.subtitle,
-            level: lesson.level, number: lesson.number,
-            estimatedTime: lesson.estimatedTime, difficulty: lesson.difficulty,
-            prerequisites: lesson.prerequisites,
-            // content is HTML — keep it as-is; this is the proof-of-concept
-            content: lesson.content,
-            concepts: lesson.concepts,
-            quiz: lesson.quiz,
-            animation: lesson.animation,
-        };
-        if (lesson.labChecks !== undefined) out.labChecks = lesson.labChecks;
-        if (lesson.tracks !== undefined) out.tracks = lesson.tracks;
-        if (lesson.capstone !== undefined) out.capstone = lesson.capstone;
-        const json = JSON.stringify(out, null, 2);
-        writeFileSync(join(dir, `${id}.json`), json);
+        const rel = `lessons/${lvl}/${id}.json`;
+        seenPaths.add(rel);
+        const abs = join(ROOT, rel);
+        let json;
+        if (PILOT_JSON_ONLY.has(id) && existsSync(abs)) {
+            // Pilot: keep the JSON file as-is; verify inline no longer carries a body.
+            if ((lesson.content || '').length > 0) {
+                console.error(`PILOT VIOLATION: ${id} has inline content — delete it, JSON is the source.`);
+                process.exitCode = 1;
+            }
+            json = readFs(abs, 'utf8');
+            if (!CHECK) console.log(`  kept (pilot JSON-only): ${rel}`);
+        } else {
+            json = JSON.stringify(buildOut(lvl, lesson), null, 2);
+            if (!CHECK) {
+                writeFileSync(abs, json);
+                console.log(`  wrote: ${rel}`);
+            }
+        }
         count++;
-        console.log(`  wrote: lessons/${lvl}/${id}.json`);
-        manifest.push({
+        manifest.lessons.push({
             id: lesson.id, level: lesson.level, number: lesson.number,
-            path: `lessons/${lvl}/${id}.json`,
+            path: rel,
             hash: createHash('sha256').update(json).digest('hex').slice(0, 16),
         });
     }
 }
-manifest.sort((a, b) => a.number - b.number);
-writeFileSync(join(outDir, 'manifest.json'), JSON.stringify({ generated: new Date().toISOString(), count, lessons: manifest }, null, 2));
-console.log(`  wrote: lessons/manifest.json (${count} entries)`);
-console.log(`\nExtracted ${count} lessons to ${outDir}.`);
-console.log('JSON is source-of-truth-ready; runtime loader (P5 loader.js) will prefer manifest entries.');
+manifest.lessons.sort((a, b) => a.number - b.number);
+manifest.count = count;
+
+if (CHECK) {
+    // Fail on any divergence: manifest mismatch OR stale JSON files (P4 lesson).
+    let bad = 0;
+    let onDisk = {};
+    try { onDisk = JSON.parse(readFs(join(outDir, 'manifest.json'), 'utf8')); } catch (e) {
+        console.error('  FAIL: lessons/manifest.json missing/unreadable — run extract first.');
+        process.exit(1);
+    }
+    const want = new Map(manifest.lessons.map(l => [l.path, l.hash]));
+    const got = new Map((onDisk.lessons || []).map(l => [l.path, l.hash]));
+    for (const [p, h] of want) {
+        if (got.get(p) !== h) { console.error(`  FAIL: manifest mismatch for ${p} — re-run extract-lessons.mjs`); bad++; }
+    }
+    for (const lvl of levelOrder) {
+        const dir = join(outDir, lvl);
+        if (!existsSync(dir)) continue;
+        for (const f of readdirSync(dir).filter(f => f.endsWith('.json'))) {
+            if (!seenPaths.has(`lessons/${lvl}/${f}`)) {
+                console.error(`  FAIL: stale file lessons/${lvl}/${f} not in manifest — prune it`);
+                bad++;
+            }
+        }
+    }
+    if (bad > 0) process.exit(1);
+    console.log(`MANIFEST CHECK PASSED (${count} entries, no stale files)`);
+} else {
+    writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+    console.log(`  wrote: lessons/manifest.json (${count} entries)`);
+    console.log(`\nExtracted ${count} lessons to ${outDir}.`);
+    console.log('JSON is the source of truth; runtime loader (loader.js) prefers manifest entries.');
+}

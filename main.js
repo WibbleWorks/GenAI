@@ -38,7 +38,7 @@ class AICourse {
         this.init();
     }
     
-    init() {
+    async init() {
         console.log('Initializing Generative AI & ML Course...');
 
         // Get DOM elements
@@ -52,8 +52,22 @@ class AICourse {
         this.avgScoreEl = document.getElementById('avgScore');
         this.confidenceLevelEl = document.getElementById('confidenceLevel');
 
-        // Load course data
+        // Load course data (P5: overlay JSON lessons first — JSON wins).
         this.loadCourseData();
+        try {
+            if (window.courseDataReady) {
+                const jsonLessons = await window.courseDataReady;
+                if (jsonLessons && jsonLessons.length && window.applyJsonLessons) {
+                    const res = window.applyJsonLessons(this.courseData, jsonLessons);
+                    console.log(`[loader] JSON overlay applied: ${res.applied.length} lessons` +
+                        (res.missing.length ? ` (ignored unknown: ${res.missing.join(',')})` : ''));
+                    // Overlay mutates the shared COURSE_DATA object in place;
+                    // this.courseData already sees it (same reference).
+                }
+            }
+        } catch (e) {
+            console.warn('[loader] JSON overlay skipped, inline fallback:', e.message);
+        }
 
         // Initialize systems
         this.animations = window.animations || null;
@@ -486,10 +500,13 @@ class AICourse {
                 this.capstonesSubmitted = progress.capstonesSubmitted || {};
                 // Absent key = save written before the P2 gate existed (grandfather path).
                 this._loadedWithoutCapstoneKey = !('capstonesSubmitted' in progress);
-                // P4: quantum_ai_intersection left core (now frontier_map at 17).
-                // Carry completion forward so nobody loses progress in the swap.
-                if (this.completedLessons.has('quantum_ai_intersection')) {
-                    this.completedLessons.add('frontier_map');
+                // P5: schema version + id aliases. v1 saves predate the field.
+                this.progressVersion = progress.version || 1;
+                const aliases = { quantum_ai_intersection: 'frontier_map' };
+                for (const [oldId, newId] of Object.entries(aliases)) {
+                    if (this.completedLessons.has(oldId) && this.findLesson(newId)) {
+                        this.completedLessons.add(newId);
+                    }
                 }
                 console.log('Progress loaded:', progress);
             }
@@ -501,6 +518,7 @@ class AICourse {
     saveProgress() {
         try {
             const progress = {
+                version: 2, // P5: progress schema version (migrations in loadProgress)
                 completedLessons: Array.from(this.completedLessons),
                 scores: this.scores,
                 weakAreas: this.weakAreas,

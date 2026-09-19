@@ -24,7 +24,7 @@ jobs:
       - name: node --check on all source
         run: |
           set -e
-          for f in ai-animations.js quiz-system.js course-data.js practical-examples.js main.js; do
+          for f in ai-animations.js quiz-system.js course-data.js practical-examples.js main.js loader.js; do
             node --check "$f" && echo "OK: $f"
           done
 
@@ -49,6 +49,39 @@ jobs:
           node-version: '20'
       - name: validate
         run: node scripts/validate-lessons.mjs
+
+  manifest-check:
+    name: Lesson manifest integrity (JSON source of truth)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: check manifest hashes + stale files
+        run: node scripts/extract-lessons.mjs --check
+      - name: loader overlay harness (no browser)
+        run: node scripts/test-loader.mjs
+      - name: lesson schema incl. quantum-course
+        run: node scripts/validate-lessons.mjs
+
+  codeblocks:
+    name: Code execution smoke (pyodide asserts + static checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: install scientific stack (pinned floor)
+        run: pip install "numpy>=1.26" "pandas>=2.2" "scikit-learn>=1.5" "scipy>=1.13"
+      - name: behavioral labcheck smoke (starter fails, solution passes)
+        run: node scripts/smoke-labchecks.mjs
+      - name: static codeblock smoke (compiles + pyodide-safe imports)
+        run: node scripts/smoke-codeblocks.mjs
 
   smoke:
     name: Browser smoke test
