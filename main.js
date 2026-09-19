@@ -486,6 +486,11 @@ class AICourse {
                 this.capstonesSubmitted = progress.capstonesSubmitted || {};
                 // Absent key = save written before the P2 gate existed (grandfather path).
                 this._loadedWithoutCapstoneKey = !('capstonesSubmitted' in progress);
+                // P4: quantum_ai_intersection left core (now frontier_map at 17).
+                // Carry completion forward so nobody loses progress in the swap.
+                if (this.completedLessons.has('quantum_ai_intersection')) {
+                    this.completedLessons.add('frontier_map');
+                }
                 console.log('Progress loaded:', progress);
             }
         } catch (e) {

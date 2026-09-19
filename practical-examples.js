@@ -997,6 +997,8 @@ print(f"Model Accuracy: {accuracy:.2f}")
     }
 
     // Render a quantum cloud guide by key.
+    // P4: currently uncalled (sole caller was the quantum lesson, now in
+    // quantum-course/). Kept for the P5 loader; remove if still unused then.
     function renderQuantumCloudGuide(key) {
         const guide = QUANTUM_CLOUD_GUIDES[key];
         if (!guide) return '';
@@ -4035,230 +4037,141 @@ print(r2.content)  # -> "Bob"
         }
     };
     
-    // Quantum-AI Intersection Lesson for Expert Level
-    // LESSON 17: Quantum-AI Intersection
-    COURSE_DATA.levels.expert.lessons.quantum_ai_intersection = {
-        id: "quantum_ai_intersection",
-        title: "Quantum-AI Intersection",
-        subtitle: "Bridging Quantum Computing and Artificial Intelligence",
+    // Frontier Map Lesson for Expert Level (P4: replaces quantum_ai_intersection
+    // in the core path; the quantum lesson lives on in quantum-course/).
+    // LESSON 17: Frontier Topics Map
+    COURSE_DATA.levels.expert.lessons.frontier_map = {
+        id: "frontier_map",
+        title: "Frontier Topics Map",
+        subtitle: "What Is Production vs Research (and How to Tell)",
         level: "expert",
         number: 17,
-        tracks: { builder: "optional", researcher: "optional", leader: "optional" },
-        estimatedTime: 90,
-        difficulty: 5,
-        prerequisites: ["practical_tensorflow"],
+        tracks: { builder: "recommended", researcher: "recommended", leader: "recommended" },
+        estimatedTime: 30,
+        difficulty: 3,
+        prerequisites: ["llm_evaluation"],
 
-        
         content: `
             <div class="lesson-section">
-                <h3>🧊 Quantum Mechanics in 5 Minutes (read this first)</h3>
-                <p>Quantum ML assumes you know what a qubit, superposition, and entanglement are. If you don't, here's the minimum:</p>
+                <h3>🎯 What You'll Be Able to Do</h3>
                 <ul>
-                    <li><strong>Qubit</strong>: the quantum analog of a bit. Where a classical bit is 0 or 1, a qubit's state is a unit vector in a 2D complex Hilbert space, written <code>|&#968;&#10217; = &#945;|0&#10217; + &#946;|1&#10217;</code> with <code>|&#945;|&#178; + |&#946;|&#178; = 1</code>. The two complex amplitudes are the "state".</li>
-                    <li><strong>Superposition</strong>: the qubit isn't "0 or 1" until measured - it's a weighted combination of both. Measurement collapses it to a 0 or 1 with probabilities <code>|&#945;|&#178;</code> and <code>|&#946;|&#178;</code>.</li>
-                    <li><strong>Entanglement</strong>: multiple qubits can be in a joint state that can't be written as a product of individual states. The Bell pair <code>(|00&#10217; + |11&#10217;)/&#8730;2</code> is the canonical example. Entanglement is why quantum parallelism <em>can</em> be exponentially richer than classical parallelism.</li>
-                    <li><strong>Quantum gates</strong>: reversible unitary operations on qubit states - e.g., Hadamard (H) creates superposition, CNOT entangles, RX/RY/RZ rotate. The "feature maps" in the code below build circuits from these.</li>
-                    <li><strong>Measurement</strong>: at the end, you measure; you get classical bits. Reading a quantum state out is the bottleneck of many quantum speedups - onecan be created in superposition but only k bits of information extracted in k measurements.</li>
+                    <li>Separate production-ready techniques from research bets</li>
+                    <li>Evaluate a frontier claim with a 5-minute checklist</li>
+                    <li>Know where the quantum-AI material lives and when to read it</li>
                 </ul>
-                <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--ai-green); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;">
-                    <strong>Why this matters for ML:</strong> quantum feature maps embed classical data into very high-dimensional Hilbert spaces. Whether this embedding gives a useful advantage over a classical kernel is exactly the open research question - read on with appropriate skepticism.
-                </div>
+                <p><strong>Before you start:</strong> complete Lesson 15 (LLM Evaluation). This lesson is judgment, not code.</p>
             </div>
 
             <div class="lesson-section">
-                <h3>⚛️+🤖 The Quantum-AI Convergence</h3>
-                <p>Two of the most transformative technologies of our time are beginning to intersect: <strong>Quantum Computing</strong> and <strong>Artificial Intelligence</strong>. This lesson explores how quantum principles <em>might</em> enhance AI, and how AI can help develop quantum systems.</p>
-                <div style="background: rgba(249, 115, 22, 0.1); border-left: 4px solid var(--ai-orange); padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0;">
-                    <strong>⚠️ Read this first:</strong> Quantum machine learning is largely a <em>research field</em>, not a production toolkit. Most claimed "quantum advantages" for ML are theoretical, problem-specific, or demonstrated only on tiny datasets. No real-world ML workload currently runs faster on quantum hardware than on a classical GPU. Treat this lesson as a map of an active research area, not a set of tools you should reach for in production.
-                </div>
-                <p><strong>Why Combine Quantum + AI? (theoretical motivations)</strong></p>
-                <ul>
-                    <li><strong>Speedup on specific problems:</strong> Some quantum algorithms offer provable speedups for very specific tasks (e.g., Shor for factoring, Grover for unstructured search). For ML the picture is much more nuanced - many proposed speedups assume data can be loaded into quantum states efficiently, which is itself an open problem (the "QRAM" question).</li>
-                    <li><strong>High-dimensional feature spaces:</strong> Quantum feature maps can embed data into an exponentially large Hilbert space, which is interesting for kernel methods - though whether this yields a practical advantage on real data is still open.</li>
-                    <li><strong>Optimization:</strong> Variational quantum algorithms (QAOA, VQE) and quantum annealing are <em>heuristic</em> optimizers. They do <strong>not</strong> guarantee finding the global optimum; they are alternative heuristics that may help on some landscapes and hurt on others.</li>
-                    <li><strong>Quantum Data:</strong> AI can help interpret quantum simulation data - this is one of the more credible near-term directions.</li>
-                </ul>
-                <p><strong>Key references:</strong> Biamonte et al. (2017) "Quantum machine learning"; Schuld, Sinayskiy &amp; Petruccione (2014); Arunachalam et al. (2015). Always read the primary literature before repeating quantum-ML claims.</p>
-            </div>
-
-            <div class="lesson-section">
-                <h3>🔗 Quantum-AI Integration Approaches</h3>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-blue);">
-                        <h4>🧮 Quantum Machine Learning</h4>
-                        <p>Quantum algorithms applied to ML tasks (research stage)</p>
-                        <ul>
-                            <li>Quantum kernel methods (QSVC)</li>
-                            <li>Variational quantum circuits as classifiers</li>
-                            <li>Quantum neural networks (QNNs)</li>
-                        </ul>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-purple);">
-                        <h4>🔄 Hybrid Quantum-Classical</h4>
-                        <p>Combine quantum and classical components</p>
-                        <ul>
-                            <li>Quantum layers in classical NN (PennyLane, TFQ)</li>
-                            <li>Classical pre/post processing</li>
-                            <li>Quantum feature extraction</li>
-                        </ul>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border-top: 4px solid var(--ai-green);">
-                        <h4>🤖 AI for Quantum</h4>
-                        <p>Use AI to improve quantum computing</p>
-                        <ul>
-                            <li>Quantum circuit optimization</li>
-                            <li>Error correction</li>
-                            <li>Quantum control</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🏗️ Quantum-AI Libraries Overview</h3>
-                <p><strong>Available Frameworks:</strong></p>
-                <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-                    <thead><tr style="border-bottom: 2px solid var(--border-color);"><th style="text-align: left; padding: 0.5rem;">Library</th><th style="text-align: left; padding: 0.5rem;">Focus</th><th style="text-align: left; padding: 0.5rem;">Integration</th></tr></thead>
+                <h3>🗺️ The Map</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead><tr style="border-bottom: 2px solid var(--border-color);"><th>Technique</th><th>Status</th><th>Evidence bar</th></tr></thead>
                     <tbody>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>Qiskit ML</strong></td><td style="padding: 0.5rem;">Quantum Kernels, QSVM, QNN</td><td style="padding: 0.5rem;">scikit-learn compatible</td></tr>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>PennyLane</strong></td><td style="padding: 0.5rem;">Hybrid Q-C models</td><td style="padding: 0.5rem;">PyTorch, TensorFlow, JAX</td></tr>
-                        <tr style="border-bottom: 1px solid var(--border-color);"><td style="padding: 0.5rem;"><strong>TensorFlow Quantum</strong></td><td style="padding: 0.5rem;">Quantum Deep Learning</td><td style="padding: 0.5rem;">TensorFlow integration</td></tr>
-                        <tr><td style="padding: 0.5rem;"><strong>Cirq</strong></td><td style="padding: 0.5rem;">NISQ circuits</td><td style="padding: 0.5rem;">TFQ backend, Google Cloud</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>RAG + eval (Lessons 13, 15)</td><td><strong>Production</strong></td><td>Golden set + faithfulness on your data</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>Tool-calling agents (Lessons 16, 18)</td><td><strong>Production, with guardrails</strong></td><td>Red-team set + traces + max-iterations bound</td></tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);"><td>Small-model fine-tuning / QLoRA (Lesson 14)</td><td><strong>Production, narrow</strong></td><td>Base-vs-tuned on held-out data + forgetting check</td></tr>
+                        <tr><td>Quantum ML advantage</td><td><strong>Research</strong></td><td>Problem-specific paper + reproduction; see quantum-course/</td></tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🚀 Practical Quantum-AI Applications</h3>
-                ${QUANTUM_LIBRARY_GUIDES.qiskit.helloWorld}
-                <p><strong>Qiskit Machine Learning</strong> provides quantum kernels that can be used with classical SVM classifiers to potentially achieve quantum advantage on certain datasets.</p>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>🔬 Hybrid Quantum-Classical Neural Networks</h3>
-                ${QUANTUM_LIBRARY_GUIDES.pennylane.helloWorld}
-                <p><strong>Key Benefits:</strong> PennyLane allows quantum circuits to be seamlessly integrated as layers in classical deep learning models, enabling hybrid architectures that leverage both quantum and classical processing.</p>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>☁️ Quantum Cloud Platforms for AI</h3>
-                <p><strong>Available Cloud Services:</strong></p>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🔵 IBM Quantum</h4>
-                        <p><small>Free access to real quantum computers with Qiskit integration</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🟠 Amazon Braket</h4>
-                        <p><small>Multiple hardware providers with AWS integration</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🟢 Google Quantum AI</h4>
-                        <p><small>Sycamore processor with TensorFlow Quantum</small></p>
-                    </div>
-                    <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px;">
-                        <h4>🔴 Azure Quantum</h4>
-                        <p><small>Multi-provider access with Azure ML integration</small></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="lesson-section">
-                <h3>💡 Hands-on: Quantum Feature Embedding</h3>
-                ${QUANTUM_LIBRARY_GUIDES.cirq.helloWorld}
-                <p><strong>Use Case:</strong> Quantum feature embedding can encode classical data into quantum states - a candidate approach for representing high-dimensional data. Whether this yields a practical advantage on real data is still an open research question.</p>
+                <p>Rule of thumb: if nobody can show you a held-out eval on data shaped like yours, it is research — interesting, worth tracking, not worth betting a launch on.</p>
             </div>
 
             <div class="lesson-section">
-                <h3>⚫️ Run on Quantum Cloud Hardware</h3>
-                ${renderQuantumCloudGuide('ibm_quantum')}
+                <h3>🔍 The 5-Minute Claim Checklist</h3>
+                <ol>
+                    <li><strong>What exactly improved, on what dataset?</strong> "Exponential speedup" with no problem named is hype (remember the AI Winters, Lesson 1).</li>
+                    <li><strong>Versus what baseline?</strong> A new method beating a weak baseline proves nothing.</li>
+                    <li><strong>Held-out?</strong> Tuned-on-golden numbers are leakage, not evidence (Lessons 15, 19-21).</li>
+                    <li><strong>Cost included?</strong> Latency, hardware, and maintenance count (Lesson 7).</li>
+                    <li><strong>Who reproduces it?</strong> One lab's demo vs independent replication.</li>
+                </ol>
             </div>
 
             <div class="lesson-section">
-                <h3>💻 Try It Yourself</h3>
-                ${renderInteractiveLab()}
+                <h3>⚫️ Quantum-AI Lives Next Door</h3>
+                <p>The full quantum lesson (qubits → Qiskit 1.x → kernels → caveats) moved to <code>quantum-course/</code> with per-claim citations (<code>CITATIONS.md</code>). Read it after Lessons 3 + 5, when you want research breadth — not as a job skill.</p>
+                <p><strong>Honest summary:</strong> quantum ML is theoretically rich and practically unproven for ML advantage. Track it; don't plan around it.</p>
             </div>
         `,
-        
-        concepts: ["Quantum-AI Convergence", "Quantum Machine Learning", "Hybrid Architectures", "Quantum Libraries", "Quantum Cloud Platforms", "Quantum Feature Embedding"],
-        
+
+        concepts: ["Production vs research", "Claim evaluation", "Hype skepticism", "Frontier map", "Quantum positioning"],
+
         quiz: {
-            id: "quantum_ai_quiz",
-            title: "Quantum-AI Intersection Quiz",
+            id: "frontier_map_quiz",
+            title: "Frontier Map Quiz",
             passingScore: 60,
-            timeLimit: 450,
+            timeLimit: 360,
             questions: [
                 {
                     id: "q1", type: "multiple-choice",
-                    question: "What is the most accurate statement about the current advantage of combining quantum computing with AI?",
+                    question: "Which of these is production-ready today with the right guardrails?",
                     options: [
-                        { text: "Most claimed quantum-ML advantages are theoretical and problem-specific - no real-world ML workload currently runs faster on quantum hardware than on a classical GPU", isCorrect: true },
-                        { text: "Quantum computers already give exponential speedup for all ML tasks", isCorrect: false },
-                        { text: "Quantum annealing guarantees the global optimum for any ML loss landscape", isCorrect: false },
-                        { text: "Quantum ML is a mature production technology used by most enterprises", isCorrect: false }
+                        { text: "RAG with golden-set eval, or tool-calling agents with red-teaming + traces", isCorrect: true },
+                        { text: "Quantum ML advantage on general workloads", isCorrect: false },
+                        { text: "Any method with a vendor benchmark slide", isCorrect: false },
+                        { text: "Nothing in AI is production-ready", isCorrect: false }
                     ],
-                    explanation: "Quantum machine learning is largely a research field. Most claimed speedups are theoretical, problem-specific, or assume efficient quantum data loading (QRAM) which is itself an open problem.",
-                    difficulty: 2, concept: "Quantum-AI Convergence"
+                    explanation: "RAG, guarded agents, and narrow fine-tuning ship today when measured; quantum advantage remains research.",
+                    difficulty: 1, concept: "Production vs research"
                 },
                 {
                     id: "q2", type: "multiple-choice",
-                    question: "What is a qubit's state?",
+                    question: "A vendor claims exponential speedup on all ML workloads. Best response?",
                     options: [
-                        { text: "A unit vector in a 2D complex Hilbert space: |psi> = alpha|0> + beta|1> with |alpha|^2 + |beta|^2 = 1", isCorrect: true },
-                        { text: "Either 0 or 1, like a classical bit", isCorrect: false },
-                        { text: "A real number in [0, 1]", isCorrect: false },
-                        { text: "An integer 0 through 7", isCorrect: false }
+                        { text: "Ask which problems, versus which baseline, on held-out data — and check Lesson 1's AI Winters", isCorrect: true },
+                        { text: "Adopt immediately to stay competitive", isCorrect: false },
+                        { text: "Dismiss all quantum work outright", isCorrect: false },
+                        { text: "Ask for a bigger benchmark number", isCorrect: false }
                     ],
-                    explanation: "A qubit's state is a unit vector in a complex 2D Hilbert space; measurement yields a classical bit with probabilities |alpha|^2 and |beta|^2.",
-                    difficulty: 2, concept: "Qubit"
+                    explanation: "Problem-specific evidence + baseline + held-out eval. Hype cycles (AI Winters) are the historical warning.",
+                    difficulty: 2, concept: "Hype skepticism"
                 },
                 {
                     id: "q3", type: "multiple-choice",
-                    question: "What is the purpose of quantum feature embedding?",
+                    question: "A frontier demo reports 99% on its eval set — tuned on the same set. What is this?",
                     options: [
-                        { text: "Encode classical data into quantum states, potentially enabling high-dimensional representations (advantage is still open)", isCorrect: true },
-                        { text: "Convert quantum algorithms to classical code", isCorrect: false },
-                        { text: "Visualize quantum circuits", isCorrect: false },
-                        { text: "Optimize classical neural networks", isCorrect: false }
+                        { text: "Eval leakage; the number is not evidence", isCorrect: true },
+                        { text: "Proof of production readiness", isCorrect: false },
+                        { text: "A fair benchmark", isCorrect: false },
+                        { text: "Overfitting, but harmless for demos", isCorrect: false }
                     ],
-                    explanation: "Quantum feature embedding encodes classical data into quantum states. Whether this yields a practical advantage on real data is still open.",
-                    difficulty: 2, concept: "Quantum Feature Embedding"
+                    explanation: "Tuning on the reporting set leaks; keep tuning and reporting sets disjoint (Lessons 15, 19-21).",
+                    difficulty: 2, concept: "Claim evaluation"
                 },
                 {
                     id: "q4", type: "multiple-choice",
-                    question: "Which library enables hybrid quantum-classical neural networks with PyTorch integration?",
+                    question: "First step before adopting a frontier technique in production?",
                     options: [
-                        { text: "PennyLane - its qml.qnn.TorchLayer wraps a quantum circuit as a PyTorch layer", isCorrect: true },
-                        { text: "Qiskit ML - primarily provides kernels and QSVC", isCorrect: false },
-                        { text: "TensorFlow Quantum - integrates with TF, not PyTorch directly", isCorrect: false },
-                        { text: "Cirq - is a circuit framework, not integrated with PyTorch", isCorrect: false }
+                        { text: "Reproduce it on your data and measure against your current baseline, cost included", isCorrect: true },
+                        { text: "Rewrite the roadmap around it", isCorrect: false },
+                        { text: "Wait for a textbook chapter", isCorrect: false },
+                        { text: "Benchmark on the vendor's dataset", isCorrect: false }
                     ],
-                    explanation: "PennyLane is designed for hybrid Q-C models and supports PyTorch, TensorFlow, and JAX via its qnn layer wrappers.",
-                    difficulty: 3, concept: "Quantum Libraries"
+                    explanation: "Your data + your baseline + cost (latency/hardware/maintenance) is the only adoption test that matters.",
+                    difficulty: 2, concept: "Claim evaluation"
                 },
                 {
                     id: "q5", type: "multiple-choice",
-                    question: "Why is 'quantum annealing finds the global optimum' an overstatement?",
+                    question: "How is the quantum-AI material positioned in this course?",
                     options: [
-                        { text: "Annealing is a heuristic - it does not guarantee global optima; it's another optimization recipe that may help on some landscapes", isCorrect: true },
-                        { text: "Quantum annealing is the same as classical gradient descent", isCorrect: false },
-                        { text: "It's guaranteed mathematically to find the optimum", isCorrect: false },
-                        { text: "It never finds any optima", isCorrect: false }
+                        { text: "Standalone research track (quantum-course/): theoretical/contested, read after Lessons 3 + 5", isCorrect: true },
+                        { text: "Core hiring skill, required for all tracks", isCorrect: false },
+                        { text: "Removed entirely", isCorrect: false },
+                        { text: "Prerequisite for the agent capstone", isCorrect: false }
                     ],
-                    explanation: "Annealing, like other variational methods, is a heuristic optimizer. It can help on some loss landscapes and fail on others; it does not provably find global optima in general.",
-                    difficulty: 2, concept: "Quantum-AI Convergence"
+                    explanation: "Quantum lives next door as cited research material — track it, don't plan launches around it.",
+                    difficulty: 1, concept: "Quantum positioning"
                 }
             ]
         },
-        
         animation: {
-            type: "nn-visualizer",
-            title: "Quantum Neural Network Visualizer",
-            description: "Visualize hybrid quantum-classical neural network architectures.",
-            controls: ["addQuantumLayer", "addClassicalLayer", "simulate"]
+            type: "ml-workflow",
+            title: "Frontier Map",
+            description: "Walk the production-vs-research map: technique -> evidence bar -> verdict.",
+            controls: ["nextStep", "previousStep"]
         }
     };
-    
+
     // Research Level (Level 5)
     // LESSON 18: Building AI Agents
     COURSE_DATA.levels.research.lessons.practical_agents = {

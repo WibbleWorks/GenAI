@@ -1,0 +1,172 @@
+{
+  "id": "frontier_map",
+  "title": "Frontier Topics Map",
+  "subtitle": "What Is Production vs Research (and How to Tell)",
+  "level": "expert",
+  "number": 17,
+  "estimatedTime": 30,
+  "difficulty": 3,
+  "prerequisites": [
+    "llm_evaluation"
+  ],
+  "content": "\n            <div class=\"lesson-section\">\n                <h3>🎯 What You'll Be Able to Do</h3>\n                <ul>\n                    <li>Separate production-ready techniques from research bets</li>\n                    <li>Evaluate a frontier claim with a 5-minute checklist</li>\n                    <li>Know where the quantum-AI material lives and when to read it</li>\n                </ul>\n                <p><strong>Before you start:</strong> complete Lesson 15 (LLM Evaluation). This lesson is judgment, not code.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🗺️ The Map</h3>\n                <table style=\"width: 100%; border-collapse: collapse;\">\n                    <thead><tr style=\"border-bottom: 2px solid var(--border-color);\"><th>Technique</th><th>Status</th><th>Evidence bar</th></tr></thead>\n                    <tbody>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td>RAG + eval (Lessons 13, 15)</td><td><strong>Production</strong></td><td>Golden set + faithfulness on your data</td></tr>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td>Tool-calling agents (Lessons 16, 18)</td><td><strong>Production, with guardrails</strong></td><td>Red-team set + traces + max-iterations bound</td></tr>\n                        <tr style=\"border-bottom: 1px solid var(--border-color);\"><td>Small-model fine-tuning / QLoRA (Lesson 14)</td><td><strong>Production, narrow</strong></td><td>Base-vs-tuned on held-out data + forgetting check</td></tr>\n                        <tr><td>Quantum ML advantage</td><td><strong>Research</strong></td><td>Problem-specific paper + reproduction; see quantum-course/</td></tr>\n                    </tbody>\n                </table>\n                <p>Rule of thumb: if nobody can show you a held-out eval on data shaped like yours, it is research — interesting, worth tracking, not worth betting a launch on.</p>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>🔍 The 5-Minute Claim Checklist</h3>\n                <ol>\n                    <li><strong>What exactly improved, on what dataset?</strong> \"Exponential speedup\" with no problem named is hype (remember the AI Winters, Lesson 1).</li>\n                    <li><strong>Versus what baseline?</strong> A new method beating a weak baseline proves nothing.</li>\n                    <li><strong>Held-out?</strong> Tuned-on-golden numbers are leakage, not evidence (Lessons 15, 19-21).</li>\n                    <li><strong>Cost included?</strong> Latency, hardware, and maintenance count (Lesson 7).</li>\n                    <li><strong>Who reproduces it?</strong> One lab's demo vs independent replication.</li>\n                </ol>\n            </div>\n\n            <div class=\"lesson-section\">\n                <h3>⚫️ Quantum-AI Lives Next Door</h3>\n                <p>The full quantum lesson (qubits → Qiskit 1.x → kernels → caveats) moved to <code>quantum-course/</code> with per-claim citations (<code>CITATIONS.md</code>). Read it after Lessons 3 + 5, when you want research breadth — not as a job skill.</p>\n                <p><strong>Honest summary:</strong> quantum ML is theoretically rich and practically unproven for ML advantage. Track it; don't plan around it.</p>\n            </div>\n        ",
+  "concepts": [
+    "Production vs research",
+    "Claim evaluation",
+    "Hype skepticism",
+    "Frontier map",
+    "Quantum positioning"
+  ],
+  "quiz": {
+    "id": "frontier_map_quiz",
+    "title": "Frontier Map Quiz",
+    "passingScore": 60,
+    "timeLimit": 360,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple-choice",
+        "question": "Which of these is production-ready today with the right guardrails?",
+        "options": [
+          {
+            "text": "RAG with golden-set eval, or tool-calling agents with red-teaming + traces",
+            "isCorrect": true
+          },
+          {
+            "text": "Quantum ML advantage on general workloads",
+            "isCorrect": false
+          },
+          {
+            "text": "Any method with a vendor benchmark slide",
+            "isCorrect": false
+          },
+          {
+            "text": "Nothing in AI is production-ready",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "RAG, guarded agents, and narrow fine-tuning ship today when measured; quantum advantage remains research.",
+        "difficulty": 1,
+        "concept": "Production vs research"
+      },
+      {
+        "id": "q2",
+        "type": "multiple-choice",
+        "question": "A vendor claims exponential speedup on all ML workloads. Best response?",
+        "options": [
+          {
+            "text": "Ask which problems, versus which baseline, on held-out data — and check Lesson 1's AI Winters",
+            "isCorrect": true
+          },
+          {
+            "text": "Adopt immediately to stay competitive",
+            "isCorrect": false
+          },
+          {
+            "text": "Dismiss all quantum work outright",
+            "isCorrect": false
+          },
+          {
+            "text": "Ask for a bigger benchmark number",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Problem-specific evidence + baseline + held-out eval. Hype cycles (AI Winters) are the historical warning.",
+        "difficulty": 2,
+        "concept": "Hype skepticism"
+      },
+      {
+        "id": "q3",
+        "type": "multiple-choice",
+        "question": "A frontier demo reports 99% on its eval set — tuned on the same set. What is this?",
+        "options": [
+          {
+            "text": "Eval leakage; the number is not evidence",
+            "isCorrect": true
+          },
+          {
+            "text": "Proof of production readiness",
+            "isCorrect": false
+          },
+          {
+            "text": "A fair benchmark",
+            "isCorrect": false
+          },
+          {
+            "text": "Overfitting, but harmless for demos",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Tuning on the reporting set leaks; keep tuning and reporting sets disjoint (Lessons 15, 19-21).",
+        "difficulty": 2,
+        "concept": "Claim evaluation"
+      },
+      {
+        "id": "q4",
+        "type": "multiple-choice",
+        "question": "First step before adopting a frontier technique in production?",
+        "options": [
+          {
+            "text": "Reproduce it on your data and measure against your current baseline, cost included",
+            "isCorrect": true
+          },
+          {
+            "text": "Rewrite the roadmap around it",
+            "isCorrect": false
+          },
+          {
+            "text": "Wait for a textbook chapter",
+            "isCorrect": false
+          },
+          {
+            "text": "Benchmark on the vendor's dataset",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Your data + your baseline + cost (latency/hardware/maintenance) is the only adoption test that matters.",
+        "difficulty": 2,
+        "concept": "Claim evaluation"
+      },
+      {
+        "id": "q5",
+        "type": "multiple-choice",
+        "question": "How is the quantum-AI material positioned in this course?",
+        "options": [
+          {
+            "text": "Standalone research track (quantum-course/): theoretical/contested, read after Lessons 3 + 5",
+            "isCorrect": true
+          },
+          {
+            "text": "Core hiring skill, required for all tracks",
+            "isCorrect": false
+          },
+          {
+            "text": "Removed entirely",
+            "isCorrect": false
+          },
+          {
+            "text": "Prerequisite for the agent capstone",
+            "isCorrect": false
+          }
+        ],
+        "explanation": "Quantum lives next door as cited research material — track it, don't plan launches around it.",
+        "difficulty": 1,
+        "concept": "Quantum positioning"
+      }
+    ]
+  },
+  "animation": {
+    "type": "ml-workflow",
+    "title": "Frontier Map",
+    "description": "Walk the production-vs-research map: technique -> evidence bar -> verdict.",
+    "controls": [
+      "nextStep",
+      "previousStep"
+    ]
+  },
+  "tracks": {
+    "builder": "recommended",
+    "researcher": "recommended",
+    "leader": "recommended"
+  }
+}

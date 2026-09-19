@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-19T20:52:58.650Z",
+  "generated": "2026-09-19T20:55:52.365Z",
   "count": 21,
   "lessons": [
     {
@@ -115,11 +115,11 @@
       "hash": "eb043d8e827c2fd2"
     },
     {
-      "id": "quantum_ai_intersection",
+      "id": "frontier_map",
       "level": "expert",
       "number": 17,
-      "path": "lessons/expert/quantum_ai_intersection.json",
-      "hash": "c356ac941f526d23"
+      "path": "lessons/expert/frontier_map.json",
+      "hash": "54bde463e64badf7"
     },
     {
       "id": "practical_agents",
