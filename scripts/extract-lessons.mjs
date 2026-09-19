@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -63,12 +64,14 @@ const outDir = resolve(ROOT, 'lessons');
 const levelOrder = ['beginner', 'intermediate', 'advanced', 'expert', 'research'];
 
 let count = 0;
+const manifest = [];
 for (const lvl of levelOrder) {
     const lessons = COURSE_DATA.levels[lvl]?.lessons || {};
     const dir = join(outDir, lvl);
     mkdirSync(dir, { recursive: true });
     for (const [id, lesson] of Object.entries(lessons)) {
         // Write the lesson as clean JSON (no JSDOM/window round-trip)
+        // P0: carry optional PLAN fields when present so JSON stays source-of-truth-ready.
         const out = {
             id: lesson.id, title: lesson.title, subtitle: lesson.subtitle,
             level: lesson.level, number: lesson.number,
@@ -80,10 +83,22 @@ for (const lvl of levelOrder) {
             quiz: lesson.quiz,
             animation: lesson.animation,
         };
-        writeFileSync(join(dir, `${id}.json`), JSON.stringify(out, null, 2));
+        if (lesson.labChecks !== undefined) out.labChecks = lesson.labChecks;
+        if (lesson.tracks !== undefined) out.tracks = lesson.tracks;
+        if (lesson.capstone !== undefined) out.capstone = lesson.capstone;
+        const json = JSON.stringify(out, null, 2);
+        writeFileSync(join(dir, `${id}.json`), json);
         count++;
         console.log(`  wrote: lessons/${lvl}/${id}.json`);
+        manifest.push({
+            id: lesson.id, level: lesson.level, number: lesson.number,
+            path: `lessons/${lvl}/${id}.json`,
+            hash: createHash('sha256').update(json).digest('hex').slice(0, 16),
+        });
     }
 }
+manifest.sort((a, b) => a.number - b.number);
+writeFileSync(join(outDir, 'manifest.json'), JSON.stringify({ generated: new Date().toISOString(), count, lessons: manifest }, null, 2));
+console.log(`  wrote: lessons/manifest.json (${count} entries)`);
 console.log(`\nExtracted ${count} lessons to ${outDir}.`);
-console.log('This is a proof-of-concept dump; the runtime loader does NOT yet read from JSON.');
+console.log('JSON is source-of-truth-ready; runtime loader (P5 loader.js) will prefer manifest entries.');
