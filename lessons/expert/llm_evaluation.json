@@ -176,6 +176,22 @@
       "starterCode": "# TODO: implement faithfulness(answer_claims, context) -> float in [0, 1].\n# Each claim scores 1.0 if every word appears in the context (case-insensitive),\n# else the fraction of its words present. Return the mean over claims.\ndef faithfulness(answer_claims, context):\n    raise NotImplementedError(\"implement me\")",
       "assertCode": "ctx = \"the eiffel tower is in paris and was completed in 1889\"\nassert faithfulness([\"tower is in paris\"], ctx) == 1.0\nassert faithfulness([\"tower is in mars\"], ctx) == 0.75, \"3 of 4 words present\"\nassert faithfulness([\"mars venus jupiter\"], ctx) == 0.0\nassert faithfulness([\"tower is in paris\", \"mars venus jupiter\"], ctx) == 0.5\na = [\"tower is in paris\", \"completed in 1889\"]\nb = [\"completed in 1889\", \"tower is in paris\"]\nassert faithfulness(a, ctx) == faithfulness(b, ctx), \"order must not change the score\"\nprint(\"faithfulness metric matches the golden mini-set\")\nprint(\"LABCHECK_PASS\")",
       "points": 2
+    },
+    {
+      "id": "ab_eval",
+      "kind": "pyodide-assert",
+      "prompt": "Size the A/B test\nImplement min_n_per_variant(baseline_rate, mde, z=1.96) with the normal-approx formula n = 2*z^2*p*(1-p)/mde^2, ceilinged to int. Smaller detectable effects need bigger samples.",
+      "starterCode": "import math\n\n# TODO: implement min_n_per_variant(baseline_rate, mde, z=1.96) with the\n# normal-approx formula for two proportions:\n# n = 2 * z^2 * p*(1-p) / mde^2. Return ceil as int.\ndef min_n_per_variant(baseline_rate, mde, z=1.96):\n    raise NotImplementedError(\"implement me\")",
+      "assertCode": "assert min_n_per_variant(0.5, 0.1) == 193\nassert min_n_per_variant(0.1, 0.05) == 277\nn = min_n_per_variant(0.7, 0.02)\nassert n > min_n_per_variant(0.7, 0.05), \"smaller MDE needs more samples\"\nprint(\"A/B sizing follows the power formula\")\nprint(\"LABCHECK_PASS\")",
+      "points": 2,
+      "track": [
+        "leader"
+      ]
     }
-  ]
+  ],
+  "tracks": {
+    "builder": "recommended",
+    "researcher": "required",
+    "leader": "required"
+  }
 }

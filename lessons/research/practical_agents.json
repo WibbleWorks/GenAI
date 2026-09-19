@@ -164,5 +164,10 @@
       "agentTypeSelector",
       "runAgent"
     ]
+  },
+  "tracks": {
+    "builder": "required",
+    "researcher": "required",
+    "leader": "recommended"
   }
 }

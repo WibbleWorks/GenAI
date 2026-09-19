@@ -166,5 +166,10 @@
       "nextTransformerStep",
       "prevTransformerStep"
     ]
+  },
+  "tracks": {
+    "builder": "recommended",
+    "researcher": "required",
+    "leader": "optional"
   }
 }

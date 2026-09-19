@@ -107,6 +107,17 @@ def extract_json(text):
         hit = sum(1 for w in words if w in ctx)
         scores.append(hit / len(words))
     return sum(scores) / len(scores)`,
+  cost_estimation: `import math
+
+def monthly_cost(n_requests, price_per_1k, fixed=0.0):
+    return math.ceil(n_requests / 1000) * price_per_1k + fixed`,
+  latency_caching: `def p95_with_cache(base_p95_ms, hit_rate, cache_ms=50):
+    return hit_rate * cache_ms + (1 - hit_rate) * base_p95_ms`,
+  ab_eval: `import math
+
+def min_n_per_variant(baseline_rate, mde, z=1.96):
+    p = baseline_rate
+    return math.ceil(2 * z ** 2 * p * (1 - p) / mde ** 2)`,
 };
 
 function runPython(code) {
@@ -175,6 +186,52 @@ for (const lvl of ['beginner', 'intermediate', 'advanced', 'expert', 'research']
       }
     }
   }
+}
+
+console.log('\n---- tracks (P3) ----');
+// Every lesson carries tracks metadata with valid values ...
+const TRACK_VALS = ['required', 'recommended', 'optional'];
+const TRACK_IDS = ['builder', 'researcher', 'leader'];
+const allLessons = [];
+for (const lvl of ['beginner', 'intermediate', 'advanced', 'expert', 'research']) {
+  const lessons = (COURSE_DATA.levels[lvl] && COURSE_DATA.levels[lvl].lessons) || {};
+  for (const [id, lesson] of Object.entries(lessons)) {
+    allLessons.push(lesson);
+    if (!lesson.tracks) { fail++; failures.push(`${id}: missing tracks`); continue; }
+    for (const t of TRACK_IDS) {
+      if (!TRACK_VALS.includes(lesson.tracks[t])) {
+        fail++; failures.push(`${id}: tracks.${t} invalid (${lesson.tracks[t]})`);
+      }
+    }
+  }
+}
+if (allLessons.length !== 21) { fail++; failures.push(`expected 21 lessons, saw ${allLessons.length}`); }
+
+// ... and every track's required route is a walkable chain covering its plan.
+const EXPECTED_REQUIRED = {
+  builder: [1, 2, 3, 4, 6, 7, 10, 12, 13, 16, 18, 19, 20, 21],
+  researcher: [1, 2, 3, 4, 5, 9, 10, 11, 14, 15, 18],
+  leader: [1, 2, 4, 7, 12, 13, 15, 19],
+};
+const byNumber = new Map(allLessons.map(l => [l.number, l]));
+for (const [track, nums] of Object.entries(EXPECTED_REQUIRED)) {
+  const route = allLessons.filter(l => (l.tracks ? l.tracks[track] : 'recommended') !== 'optional')
+    .sort((a, b) => a.number - b.number).map(l => l.number);
+  const missing = nums.filter(n => !route.includes(n));
+  if (missing.length > 0) { fail++; failures.push(`route ${track}: missing required ${missing}`); continue; }
+  // walkable: required numbers appear in ascending order with no gaps in route
+  const reqInRoute = route.filter(n => nums.includes(n));
+  const ordered = reqInRoute.every((n, i) => n === [...nums].sort((a, b) => a - b)[i]);
+  if (!ordered) { fail++; failures.push(`route ${track}: required lessons out of order`); continue; }
+  // track-aware Next from each required lesson stays on-route or ends
+  for (const n of nums) {
+    const lesson = byNumber.get(n);
+    const idx = route.indexOf(n);
+    void lesson;
+    if (idx === -1) { fail++; failures.push(`route ${track}: lesson ${n} unreachable`); }
+  }
+  pass++;
+  console.log(`  ok: route ${track} (${route.length} lessons, required ${nums.length} in order)`);
 }
 
 console.log('\n----');

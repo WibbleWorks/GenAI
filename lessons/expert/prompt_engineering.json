@@ -176,5 +176,10 @@
       "assertCode": "good = 'Here is the result: {\"answer\": \"Paris\", \"citations\": [\"doc1\"]} done.'\nobj = extract_json(good)\nassert obj == {\"answer\": \"Paris\", \"citations\": [\"doc1\"]}, f\"wrong parse: {obj}\"\nfor bad in [\n    \"no json here\",\n    '{\"answer\": \"Paris\"}',\n    '{\"answer\": 1} {\"answer\": 2}',\n    '{\"answer\": \"x\", \"citations\": }',\n]:\n    try:\n        extract_json(bad)\n    except ValueError:\n        pass\n    else:\n        raise AssertionError(f\"should have raised ValueError for: {bad!r}\")\nprint(\"JSON guard accepts valid output, rejects the rest\")\nprint(\"LABCHECK_PASS\")",
       "points": 2
     }
-  ]
+  ],
+  "tracks": {
+    "builder": "required",
+    "researcher": "recommended",
+    "leader": "required"
+  }
 }

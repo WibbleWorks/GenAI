@@ -162,5 +162,10 @@
       "pause",
       "jumpToEra"
     ]
+  },
+  "tracks": {
+    "builder": "required",
+    "researcher": "required",
+    "leader": "required"
   }
 }

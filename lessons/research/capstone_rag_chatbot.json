@@ -172,6 +172,11 @@
       "previousStep"
     ]
   },
+  "tracks": {
+    "builder": "required",
+    "researcher": "optional",
+    "leader": "required"
+  },
   "capstone": {
     "id": "rag-chatbot",
     "starterPath": "capstones/rag-chatbot/starter",

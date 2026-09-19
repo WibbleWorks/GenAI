@@ -165,5 +165,10 @@
       "addClassicalLayer",
       "simulate"
     ]
+  },
+  "tracks": {
+    "builder": "optional",
+    "researcher": "optional",
+    "leader": "optional"
   }
 }

@@ -241,6 +241,18 @@ body {
     cursor: not-allowed;
 }
 
+/* P3: lessons optional for the current track (dimmed + tagged, still open) */
+.nav-item.track-optional {
+    opacity: 0.62;
+}
+
+.track-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 0.35rem;
+    white-space: nowrap;
+}
+
 .nav-indicator {
     width: 8px;
     height: 8px;

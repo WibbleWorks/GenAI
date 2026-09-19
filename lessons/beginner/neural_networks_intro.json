@@ -170,5 +170,10 @@
       "autoGd",
       "resetGd"
     ]
+  },
+  "tracks": {
+    "builder": "required",
+    "researcher": "required",
+    "leader": "optional"
   }
 }

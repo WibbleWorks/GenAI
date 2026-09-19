@@ -171,6 +171,11 @@
       "trainNN"
     ]
   },
+  "tracks": {
+    "builder": "required",
+    "researcher": "recommended",
+    "leader": "recommended"
+  },
   "capstone": {
     "id": "finetune-slm",
     "starterPath": "capstones/finetune-slm/starter",

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-19T20:49:26.379Z",
+  "generated": "2026-09-19T20:52:58.650Z",
   "count": 21,
   "lessons": [
     {
@@ -7,147 +7,147 @@
       "level": "beginner",
       "number": 1,
       "path": "lessons/beginner/ai_introduction.json",
-      "hash": "dd25f74df500325a"
+      "hash": "58e1e5b1a040587d"
     },
     {
       "id": "ml_introduction",
       "level": "beginner",
       "number": 2,
       "path": "lessons/beginner/ml_introduction.json",
-      "hash": "437eec1097ed8dda"
+      "hash": "f60dcabd39226609"
     },
     {
       "id": "neural_networks_intro",
       "level": "beginner",
       "number": 3,
       "path": "lessons/beginner/neural_networks_intro.json",
-      "hash": "06ff97b427825a15"
+      "hash": "3a5b405454f24aac"
     },
     {
       "id": "ai_ethics",
       "level": "beginner",
       "number": 4,
       "path": "lessons/beginner/ai_ethics.json",
-      "hash": "d67d3622c3099ce1"
+      "hash": "f00d7fc9aec80e26"
     },
     {
       "id": "math_refresher",
       "level": "beginner",
       "number": 5,
       "path": "lessons/beginner/math_refresher.json",
-      "hash": "f7f93d36d9ede678"
+      "hash": "f8f6febd7847fec5"
     },
     {
       "id": "practical_scikit",
       "level": "intermediate",
       "number": 6,
       "path": "lessons/intermediate/practical_scikit.json",
-      "hash": "68770d092d5f84c4"
+      "hash": "18f3fcaaceca5eae"
     },
     {
       "id": "mlops_basics",
       "level": "intermediate",
       "number": 7,
       "path": "lessons/intermediate/mlops_basics.json",
-      "hash": "b0eaa023e8ca8f01"
+      "hash": "0f57f94b2c7dcf0b"
     },
     {
       "id": "practical_tensorflow",
       "level": "advanced",
       "number": 8,
       "path": "lessons/advanced/practical_tensorflow.json",
-      "hash": "014016037fcd1314"
+      "hash": "b1ea721c2a4da44a"
     },
     {
       "id": "practical_transformers",
       "level": "advanced",
       "number": 9,
       "path": "lessons/advanced/practical_transformers.json",
-      "hash": "508a9766300f0dab"
+      "hash": "a7b20051086f3fae"
     },
     {
       "id": "embeddings",
       "level": "advanced",
       "number": 10,
       "path": "lessons/advanced/embeddings.json",
-      "hash": "31a51adce19332f0"
+      "hash": "bc45c6bdf74aa699"
     },
     {
       "id": "transfer_learning",
       "level": "advanced",
       "number": 11,
       "path": "lessons/advanced/transfer_learning.json",
-      "hash": "e4e823b8d80a1462"
+      "hash": "e485250fc29e5f08"
     },
     {
       "id": "prompt_engineering",
       "level": "expert",
       "number": 12,
       "path": "lessons/expert/prompt_engineering.json",
-      "hash": "98267c958894e58c"
+      "hash": "5695a0cd27e544c7"
     },
     {
       "id": "rag_vector_databases",
       "level": "expert",
       "number": 13,
       "path": "lessons/expert/rag_vector_databases.json",
-      "hash": "8f28eed361d86878"
+      "hash": "db50496df9c0748c"
     },
     {
       "id": "fine_tuning_peft",
       "level": "expert",
       "number": 14,
       "path": "lessons/expert/fine_tuning_peft.json",
-      "hash": "c5cd1cf60f8150ee"
+      "hash": "2e9ba4d4433c7ad9"
     },
     {
       "id": "llm_evaluation",
       "level": "expert",
       "number": 15,
       "path": "lessons/expert/llm_evaluation.json",
-      "hash": "98b2725a949fff36"
+      "hash": "dda370cf6e69ba27"
     },
     {
       "id": "practical_langchain",
       "level": "expert",
       "number": 16,
       "path": "lessons/expert/practical_langchain.json",
-      "hash": "d43d8ffe0cc66dfb"
+      "hash": "eb043d8e827c2fd2"
     },
     {
       "id": "quantum_ai_intersection",
       "level": "expert",
       "number": 17,
       "path": "lessons/expert/quantum_ai_intersection.json",
-      "hash": "089ea99fad2d0a59"
+      "hash": "c356ac941f526d23"
     },
     {
       "id": "practical_agents",
       "level": "research",
       "number": 18,
       "path": "lessons/research/practical_agents.json",
-      "hash": "5d6e23138fbb1a3f"
+      "hash": "5f576cd1c6b73e2e"
     },
     {
       "id": "capstone_rag_chatbot",
       "level": "research",
       "number": 19,
       "path": "lessons/research/capstone_rag_chatbot.json",
-      "hash": "829a73db61e9199c"
+      "hash": "df25e19924e56b17"
     },
     {
       "id": "capstone_finetune",
       "level": "research",
       "number": 20,
       "path": "lessons/research/capstone_finetune.json",
-      "hash": "499efece4f09423c"
+      "hash": "2068be1b92a252d0"
     },
     {
       "id": "capstone_agent",
       "level": "research",
       "number": 21,
       "path": "lessons/research/capstone_agent.json",
-      "hash": "296151a7f7a8a8d3"
+      "hash": "87b035062b5a9df4"
     }
   ]
 }

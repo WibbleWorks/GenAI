@@ -180,5 +180,10 @@
       "assertCode": "import numpy as np\nassert len(y_test) == 30, f\"expected 30 test rows, got {len(y_test)}\"\ncounts = sorted(np.bincount(y_test, minlength=3).tolist())\nassert counts == [10, 10, 10], f\"class counts in test are {counts}, want [10, 10, 10] — did you forget stratify=y?\"\nprint(\"stratified split keeps all 3 classes at 10/10/10\")\nprint(\"LABCHECK_PASS\")",
       "points": 2
     }
-  ]
+  ],
+  "tracks": {
+    "builder": "required",
+    "researcher": "optional",
+    "leader": "recommended"
+  }
 }

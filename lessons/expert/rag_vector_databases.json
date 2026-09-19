@@ -176,5 +176,10 @@
       "assertCode": "text = \"abcdefghij\" * 10  # 100 chars\nchunks = chunk_text(text, 30, 10)\nassert all(0 < len(c) <= 30 for c in chunks), f\"chunk size violated: {[len(c) for c in chunks]}\"\nassert len(chunks) == 5, f\"expected 5 chunks for 100 chars size=30 overlap=10, got {len(chunks)}\"\nfor a, b in zip(chunks, chunks[1:]):\n    assert a[-10:] == b[:10], f\"overlap mismatch: {a[-10:]!r} vs {b[:10]!r}\"\ncovered = chunks[0] + \"\".join(c[10:] for c in chunks[1:])\nassert covered == text, \"chunks must cover the text with no gaps\"\nassert chunk_text(\"\", 30, 10) == [], \"empty text -> no chunks\"\nprint(\"chunking covers the text with exact overlap\")\nprint(\"LABCHECK_PASS\")",
       "points": 2
     }
-  ]
+  ],
+  "tracks": {
+    "builder": "required",
+    "researcher": "recommended",
+    "leader": "required"
+  }
 }

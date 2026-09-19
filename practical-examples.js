@@ -1159,6 +1159,7 @@ print(f"Model Accuracy: {accuracy:.2f}")
         subtitle: "Classic Machine Learning with scikit-learn",
         level: "intermediate",
         number: 6,
+        tracks: { builder: "required", researcher: "optional", leader: "recommended" },
         estimatedTime: 75,
         difficulty: 3,
         prerequisites: ["neural_networks_intro"],
@@ -1465,6 +1466,7 @@ print("LABCHECK_PASS")`,
         subtitle: "From Notebook to Production",
         level: "intermediate",
         number: 7,
+        tracks: { builder: "required", researcher: "optional", leader: "required" },
         estimatedTime: 75,
         difficulty: 3,
         prerequisites: ["practical_scikit"],
@@ -1615,6 +1617,7 @@ def predict(p: Passenger):
 
             <div class="lesson-section">
                 <h3>💻 Try It Yourself</h3>
+                ${renderLabChecks('mlops_basics')}
                 ${renderInteractiveLab()}
             </div>
         `,
@@ -1693,9 +1696,64 @@ def predict(p: Passenger):
         animation: {
             type: "ml-workflow",
             title: "MLOps Loop",
-            description: "Walk the MLOps loop: train -> package -> deploy -> monitor -> retrain trigger.",
+            description: "Walk the MLOps loop: train -> package -> deploy -> monitor -> retrain -> redeploy.",
             controls: ["nextStep", "previousStep"]
-        }
+        },
+
+        // P3 Manager-track labs (deferred T4.5/T4.6/T4.7). Verified discriminating.
+        labChecks: [
+            {
+                id: "cost_estimation",
+                kind: "pyodide-assert",
+                prompt: "Price the inference bill\nImplement monthly_cost(n_requests, price_per_1k, fixed=0.0): billable units are ceil(n/1000); total is units times price plus fixed.",
+                starterCode: `import math
+
+# TODO: implement monthly_cost(n_requests, price_per_1k, fixed=0.0).
+# Billable units = ceil(n_requests / 1000); total = units * price_per_1k + fixed.
+def monthly_cost(n_requests, price_per_1k, fixed=0.0):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert monthly_cost(2500, 2.0) == 6.0
+assert monthly_cost(1000, 2.0) == 2.0
+assert monthly_cost(1001, 2.0) == 4.0
+assert monthly_cost(0, 2.0, 5.0) == 5.0
+print("cost model bills per started 1k block")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
+            },
+            {
+                id: "latency_caching",
+                kind: "pyodide-assert",
+                prompt: "Model the cache win\nImplement p95_with_cache(base_p95_ms, hit_rate, cache_ms=50): expected latency under a hit mix is hit_rate * cache_ms + (1 - hit_rate) * base.",
+                starterCode: `# TODO: implement p95_with_cache(base_p95_ms, hit_rate, cache_ms=50).
+# Expected latency under a hit mix: hit_rate * cache_ms + (1 - hit_rate) * base.
+def p95_with_cache(base_p95_ms, hit_rate, cache_ms=50):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert p95_with_cache(4000, 0.0) == 4000
+assert p95_with_cache(4000, 1.0) == 50
+assert p95_with_cache(4000, 0.5) == 2025.0
+assert p95_with_cache(4000, 0.9) < 1000, "90% cache hits must bring p95 under 1s here"
+print("cache-hit mix lowers expected latency")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
+            },
+            {
+                id: "incident_rollback",
+                kind: "colab-assert",
+                prompt: "Run the incident walkthrough\nA model regressed in production (accuracy 0.91 -> 0.83 after deploy). Work the runbook below in Colab/docs: detect, decide rollback vs rollforward, diagnose with traces, write the postmortem stub. Paste your rollback decision + evidence.",
+                starterCode: `# Incident walkthrough (no execution needed — do this against your capstone traces).
+# 1. DETECT: which golden metric moved, and when? (compare agent_traces.jsonl windows)
+# 2. DECIDE: rollback if the regression is user-facing and unexplained; rollforward if the fix is one-line and reviewed.
+# 3. DIAGNOSE: top failing slice (per-slice metrics, Lesson 4) + recent deploys diff.
+# 4. POSTMORTEM: timeline, root cause class (data / code / config / upstream), action items with owners.
+DECISION = "rollback"  # or "rollforward", with one-line evidence below
+EVIDENCE = "golden faithfulness 0.92 -> 0.71 starting with deploy #42; slice 'refund' worst"`,
+                assertCode: `# Self-check (run mentally or in Colab): DECISION is set, EVIDENCE names a metric + a deploy/time boundary.`,
+                points: 1,
+                track: ["leader"]
+            }
+        ]
     };
 
     // Advanced Level (Level 3)
@@ -1705,6 +1763,7 @@ def predict(p: Passenger):
         subtitle: "Deep Learning with TensorFlow 2.x",
         level: "advanced",
         number: 8,
+        tracks: { builder: "recommended", researcher: "optional", leader: "optional" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["practical_scikit"],
@@ -1930,6 +1989,7 @@ model.fit(x_train, y_train, epochs=5,
         subtitle: "State-of-the-Art NLP with HuggingFace Transformers",
         level: "advanced",
         number: 9,
+        tracks: { builder: "recommended", researcher: "required", leader: "optional" },
         estimatedTime: 90,
         difficulty: 4,
         prerequisites: ["practical_tensorflow"],
@@ -2218,6 +2278,7 @@ plt.colorbar(im); plt.tight_layout(); plt.show()
         subtitle: "Turning Text, Images, and Items into Searchable Vectors",
         level: "advanced",
         number: 10,
+        tracks: { builder: "required", researcher: "required", leader: "optional" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_transformers"],
@@ -2447,6 +2508,7 @@ print("LABCHECK_PASS")`,
         subtitle: "Feature Extraction, Fine-tuning, and Adaptation",
         level: "advanced",
         number: 11,
+        tracks: { builder: "optional", researcher: "required", leader: "optional" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_tensorflow", "embeddings"],
@@ -2684,6 +2746,7 @@ model.fit(train_ds, validation_data=val_ds, epochs=2)
         subtitle: "Designing Effective Prompts for Language Models",
         level: "expert",
         number: 12,
+        tracks: { builder: "required", researcher: "recommended", leader: "required" },
         estimatedTime: 60,
         difficulty: 3,
         prerequisites: ["practical_transformers"],
@@ -2962,6 +3025,7 @@ print("LABCHECK_PASS")`,
         subtitle: "Grounding LLMs in Your Own Data",
         level: "expert",
         number: 13,
+        tracks: { builder: "required", researcher: "recommended", leader: "required" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["prompt_engineering"],
@@ -3251,6 +3315,7 @@ print("LABCHECK_PASS")`,
         subtitle: "Customizing Models with LoRA & QLoRA",
         level: "expert",
         number: 14,
+        tracks: { builder: "recommended", researcher: "required", leader: "optional" },
         estimatedTime: 75,
         difficulty: 4,
         prerequisites: ["practical_transformers", "practical_tensorflow"],
@@ -3465,6 +3530,7 @@ trainer.save_model("./qlora-adapter")
         subtitle: "Measuring LLM Systems Responsibly",
         level: "expert",
         number: 15,
+        tracks: { builder: "recommended", researcher: "required", leader: "required" },
         estimatedTime: 60,
         difficulty: 4,
         prerequisites: ["prompt_engineering", "ai_ethics"],
@@ -3712,6 +3778,26 @@ assert faithfulness(a, ctx) == faithfulness(b, ctx), "order must not change the 
 print("faithfulness metric matches the golden mini-set")
 print("LABCHECK_PASS")`,
                 points: 2
+            },
+            {
+                id: "ab_eval",
+                kind: "pyodide-assert",
+                prompt: "Size the A/B test\nImplement min_n_per_variant(baseline_rate, mde, z=1.96) with the normal-approx formula n = 2*z^2*p*(1-p)/mde^2, ceilinged to int. Smaller detectable effects need bigger samples.",
+                starterCode: `import math
+
+# TODO: implement min_n_per_variant(baseline_rate, mde, z=1.96) with the
+# normal-approx formula for two proportions:
+# n = 2 * z^2 * p*(1-p) / mde^2. Return ceil as int.
+def min_n_per_variant(baseline_rate, mde, z=1.96):
+    raise NotImplementedError("implement me")`,
+                assertCode: `assert min_n_per_variant(0.5, 0.1) == 193
+assert min_n_per_variant(0.1, 0.05) == 277
+n = min_n_per_variant(0.7, 0.02)
+assert n > min_n_per_variant(0.7, 0.05), "smaller MDE needs more samples"
+print("A/B sizing follows the power formula")
+print("LABCHECK_PASS")`,
+                points: 2,
+                track: ["leader"]
             }
         ]
     };
@@ -3724,6 +3810,7 @@ print("LABCHECK_PASS")`,
         subtitle: "Building LLM Applications with LangChain",
         level: "expert",
         number: 16,
+        tracks: { builder: "required", researcher: "recommended", leader: "recommended" },
         estimatedTime: 90,
         difficulty: 4,
         prerequisites: ["llm_evaluation"],
@@ -3956,6 +4043,7 @@ print(r2.content)  # -> "Bob"
         subtitle: "Bridging Quantum Computing and Artificial Intelligence",
         level: "expert",
         number: 17,
+        tracks: { builder: "optional", researcher: "optional", leader: "optional" },
         estimatedTime: 90,
         difficulty: 5,
         prerequisites: ["practical_tensorflow"],
@@ -4179,6 +4267,7 @@ print(r2.content)  # -> "Bob"
         subtitle: "From Simple to Autonomous Agents",
         level: "research",
         number: 18,
+        tracks: { builder: "required", researcher: "required", leader: "recommended" },
         estimatedTime: 90,
         difficulty: 5,
         prerequisites: ["practical_langchain"],
@@ -4495,6 +4584,7 @@ print(run_multi_agent_query("What is the capital of France?"))
         subtitle: "Build a Production-Style RAG System End-to-End",
         level: "research",
         number: 19,
+        tracks: { builder: "required", researcher: "optional", leader: "required" },
         estimatedTime: 180,
         difficulty: 5,
         prerequisites: ["practical_agents", "rag_vector_databases", "prompt_engineering", "llm_evaluation"],
@@ -4791,6 +4881,7 @@ print(result)
         subtitle: "End-to-end PEFT Pipeline with Evaluation",
         level: "research",
         number: 20,
+        tracks: { builder: "required", researcher: "recommended", leader: "recommended" },
         estimatedTime: 150,
         difficulty: 5,
         prerequisites: ["capstone_rag_chatbot", "fine_tuning_peft", "llm_evaluation"],
@@ -5146,6 +5237,7 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
         subtitle: "Tool Calling, Safety, and Observability",
         level: "research",
         number: 21,
+        tracks: { builder: "required", researcher: "optional", leader: "recommended" },
         estimatedTime: 120,
         difficulty: 5,
         prerequisites: ["capstone_rag_chatbot", "practical_agents", "prompt_engineering"],

@@ -169,6 +169,11 @@
       "runAgent"
     ]
   },
+  "tracks": {
+    "builder": "required",
+    "researcher": "optional",
+    "leader": "recommended"
+  },
   "capstone": {
     "id": "agent-tools",
     "starterPath": "capstones/agent-tools/starter",
