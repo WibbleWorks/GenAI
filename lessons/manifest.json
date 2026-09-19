@@ -1,0 +1,153 @@
+{
+  "generated": "2026-09-19T20:14:51.641Z",
+  "count": 21,
+  "lessons": [
+    {
+      "id": "ai_introduction",
+      "level": "beginner",
+      "number": 1,
+      "path": "lessons/beginner/ai_introduction.json",
+      "hash": "dd25f74df500325a"
+    },
+    {
+      "id": "ml_introduction",
+      "level": "beginner",
+      "number": 2,
+      "path": "lessons/beginner/ml_introduction.json",
+      "hash": "437eec1097ed8dda"
+    },
+    {
+      "id": "neural_networks_intro",
+      "level": "beginner",
+      "number": 3,
+      "path": "lessons/beginner/neural_networks_intro.json",
+      "hash": "06ff97b427825a15"
+    },
+    {
+      "id": "ai_ethics",
+      "level": "beginner",
+      "number": 4,
+      "path": "lessons/beginner/ai_ethics.json",
+      "hash": "d67d3622c3099ce1"
+    },
+    {
+      "id": "math_refresher",
+      "level": "beginner",
+      "number": 5,
+      "path": "lessons/beginner/math_refresher.json",
+      "hash": "f7f93d36d9ede678"
+    },
+    {
+      "id": "practical_scikit",
+      "level": "intermediate",
+      "number": 6,
+      "path": "lessons/intermediate/practical_scikit.json",
+      "hash": "c43651e83745090a"
+    },
+    {
+      "id": "mlops_basics",
+      "level": "intermediate",
+      "number": 7,
+      "path": "lessons/intermediate/mlops_basics.json",
+      "hash": "b0eaa023e8ca8f01"
+    },
+    {
+      "id": "practical_tensorflow",
+      "level": "advanced",
+      "number": 8,
+      "path": "lessons/advanced/practical_tensorflow.json",
+      "hash": "014016037fcd1314"
+    },
+    {
+      "id": "practical_transformers",
+      "level": "advanced",
+      "number": 9,
+      "path": "lessons/advanced/practical_transformers.json",
+      "hash": "508a9766300f0dab"
+    },
+    {
+      "id": "embeddings",
+      "level": "advanced",
+      "number": 10,
+      "path": "lessons/advanced/embeddings.json",
+      "hash": "bfc9c8ee1cd04136"
+    },
+    {
+      "id": "transfer_learning",
+      "level": "advanced",
+      "number": 11,
+      "path": "lessons/advanced/transfer_learning.json",
+      "hash": "e4e823b8d80a1462"
+    },
+    {
+      "id": "prompt_engineering",
+      "level": "expert",
+      "number": 12,
+      "path": "lessons/expert/prompt_engineering.json",
+      "hash": "68579088409678ac"
+    },
+    {
+      "id": "rag_vector_databases",
+      "level": "expert",
+      "number": 13,
+      "path": "lessons/expert/rag_vector_databases.json",
+      "hash": "8266cffa46a25e34"
+    },
+    {
+      "id": "fine_tuning_peft",
+      "level": "expert",
+      "number": 14,
+      "path": "lessons/expert/fine_tuning_peft.json",
+      "hash": "c5cd1cf60f8150ee"
+    },
+    {
+      "id": "llm_evaluation",
+      "level": "expert",
+      "number": 15,
+      "path": "lessons/expert/llm_evaluation.json",
+      "hash": "02016baca0425b73"
+    },
+    {
+      "id": "practical_langchain",
+      "level": "expert",
+      "number": 16,
+      "path": "lessons/expert/practical_langchain.json",
+      "hash": "d43d8ffe0cc66dfb"
+    },
+    {
+      "id": "quantum_ai_intersection",
+      "level": "expert",
+      "number": 17,
+      "path": "lessons/expert/quantum_ai_intersection.json",
+      "hash": "089ea99fad2d0a59"
+    },
+    {
+      "id": "practical_agents",
+      "level": "research",
+      "number": 18,
+      "path": "lessons/research/practical_agents.json",
+      "hash": "5d6e23138fbb1a3f"
+    },
+    {
+      "id": "capstone_rag_chatbot",
+      "level": "research",
+      "number": 19,
+      "path": "lessons/research/capstone_rag_chatbot.json",
+      "hash": "f6fd1cd440c4fd70"
+    },
+    {
+      "id": "capstone_finetune",
+      "level": "research",
+      "number": 20,
+      "path": "lessons/research/capstone_finetune.json",
+      "hash": "5e24f53f9efb654a"
+    },
+    {
+      "id": "capstone_agent",
+      "level": "research",
+      "number": 21,
+      "path": "lessons/research/capstone_agent.json",
+      "hash": "c911690297a70a34"
+    }
+  ]
+}

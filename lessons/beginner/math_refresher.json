@@ -162,12 +162,15 @@
     ]
   },
   "animation": {
-    "type": "ml-workflow",
-    "title": "Math Concepts Map",
-    "description": "Walk the math concepts used across the course.",
+    "type": "loss-landscape",
+    "title": "Loss-Landscape Contour",
+    "description": "Walk gradient descent on a 2D bivariate-quadratic loss surface with contour lines.",
     "controls": [
-      "nextStep",
-      "previousStep"
+      "llLrSlider",
+      "llOptimizerSelector",
+      "stepLl",
+      "autoLl",
+      "resetLl"
     ]
   }
 }

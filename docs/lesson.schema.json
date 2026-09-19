@@ -7,6 +7,7 @@
   "type": "object",
   "required": ["id", "title", "subtitle", "level", "number", "estimatedTime", "difficulty", "prerequisites", "content", "concepts", "quiz", "animation"],
   "additionalProperties": false,
+  "comment": "P0 scaffold: labChecks/tracks/capstone are optional (PLAN §1A/§1B/§4). JSON wins over inline JS once loader.js lands (P5).",
 
   "properties": {
     "id": {
@@ -68,6 +69,18 @@
     },
     "animation": {
       "$ref": "#/$defs/Animation"
+    },
+    "labChecks": {
+      "type": "array",
+      "description": "Optional autograded checks (PLAN P1). Max 5 per lesson in v1.",
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/LabCheck" }
+    },
+    "tracks": {
+      "$ref": "#/$defs/Tracks"
+    },
+    "capstone": {
+      "$ref": "#/$defs/Capstone"
     }
   },
 
@@ -100,7 +113,7 @@
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "pattern": "^q[0-9]+$", "description": "Within-quiz id like 'q1'." },
-        "type": { "type": "string", "enum": ["multiple-choice"] },
+        "type": { "type": "string", "enum": ["multiple-choice", "mcq-code"], "description": "mcq-code = code-reading MCQ (spot-the-bug), same scoring, different analytics tag (PLAN P1)." },
         "question": { "type": "string" },
         "options": {
           "type": "array",
@@ -153,6 +166,42 @@
           "description": "List of control names (mostly informational; the JS source is the source of truth for which controls actually render).",
           "items": { "type": "string" }
         }
+      }
+    },
+    "LabCheck": {
+      "type": "object",
+      "required": ["id", "kind", "prompt", "points"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "Unique within lesson, e.g. 'rag_chunk_overlap'." },
+        "kind": { "type": "string", "enum": ["pyodide-assert", "colab-assert", "mcq-code"], "description": "pyodide-assert runs in AILab; colab-assert is import-checked in CI; mcq-code is code-reading fallback." },
+        "prompt": { "type": "string", "description": "Markdown shown in lab panel." },
+        "starterCode": { "type": "string", "description": "Python starter (pyodide/colab kinds)." },
+        "assertCode": { "type": "string", "description": "Python asserts appended after user code. No network." },
+        "points": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "track": { "type": "array", "items": { "type": "string", "enum": ["builder", "researcher", "leader"] }, "description": "Which tracks see this check. Omit = all tracks." }
+      }
+    },
+    "Tracks": {
+      "type": "object",
+      "required": ["builder", "researcher", "leader"],
+      "additionalProperties": false,
+      "properties": {
+        "builder": { "type": "string", "enum": ["required", "recommended", "optional"] },
+        "researcher": { "type": "string", "enum": ["required", "recommended", "optional"] },
+        "leader": { "type": "string", "enum": ["required", "recommended", "optional"], "description": "Display name is Manager; id stays 'leader' for compat (PLAN D-track)." }
+      }
+    },
+    "Capstone": {
+      "type": "object",
+      "required": ["id", "starterPath"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Capstone slug, e.g. 'rag-chatbot'." },
+        "starterPath": { "type": "string", "description": "Repo-relative path to starter, e.g. 'capstones/rag-chatbot/starter'." },
+        "goldenSet": { "type": "string", "description": "Path to golden QA/outputs, e.g. 'capstones/rag-chatbot/expected/golden_qa.json'." },
+        "latencyBudgetP95": { "type": "string", "description": "e.g. '4s'. Informational." },
+        "minRedTeam": { "type": "integer", "minimum": 0, "description": "Min adversarial prompts (agent capstone)." }
       }
     }
   }
