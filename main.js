@@ -13,6 +13,7 @@ class AICourse {
         this.timeSpent = 0;
         this.confidenceLevels = {};
         this.labChecksPassed = {}; // P1: {lessonId: [checkId]} persisted like scores
+        this.capstonesSubmitted = {}; // P2: {capstoneId: {selfScore, link, date}}
         this.startTime = Date.now();
         
         // DOM elements
@@ -435,6 +436,9 @@ class AICourse {
                 this.confidenceLevels = progress.confidenceLevels || {};
                 this.currentLessonId = progress.currentLessonId || null;
                 this.labChecksPassed = progress.labChecksPassed || {};
+                this.capstonesSubmitted = progress.capstonesSubmitted || {};
+                // Absent key = save written before the P2 gate existed (grandfather path).
+                this._loadedWithoutCapstoneKey = !('capstonesSubmitted' in progress);
                 console.log('Progress loaded:', progress);
             }
         } catch (e) {
@@ -452,7 +456,8 @@ class AICourse {
                 confidenceLevels: this.confidenceLevels,
                 currentLessonId: this.currentLessonId,
                 learningPath: this.learningPath,
-                labChecksPassed: this.labChecksPassed
+                labChecksPassed: this.labChecksPassed,
+                capstonesSubmitted: this.capstonesSubmitted
             };
             localStorage.setItem('aiCourseProgress', JSON.stringify(progress));
             // Also push to Supabase if the user is logged in (auth.js)
@@ -783,6 +788,11 @@ class AICourse {
             window.mountLabChecks(this.lessonContainer);
         }
 
+        // Mount capstone submission widgets (P2)
+        if (window.mountCapstoneSubmit) {
+            window.mountCapstoneSubmit(this.lessonContainer);
+        }
+
         // Start animation if specified
         if (lesson.animation) {
             this.startAnimation(lessonId);
@@ -998,6 +1008,30 @@ class AICourse {
         }
     }
 
+    // P2: record a capstone self-assessment submission. Persisted via saveProgress.
+    markCapstoneSubmitted(capstoneId, selfScore, link) {
+        this.capstonesSubmitted[capstoneId] = {
+            selfScore, link, date: new Date().toISOString().slice(0, 10)
+        };
+        this.logActivity(`Submitted capstone: ${capstoneId} self-score ${selfScore}/20`);
+        this.saveProgress();
+        // Refresh the widget in place
+        const mount = document.querySelector(`[data-capstone-submit="${capstoneId}"]`);
+        if (mount) {
+            mount.dataset.mounted = '0';
+            if (window.mountCapstoneSubmit) window.mountCapstoneSubmit(this.lessonContainer);
+        }
+    }
+
+    // P2: portfolio gate. 3/3 submissions required for the Portfolio-Complete
+    // badge. Grandfathered when an old save (no capstonesSubmitted key) already
+    // completed every lesson before this gate existed.
+    capstoneGate() {
+        const ids = ['rag-chatbot', 'finetune-slm', 'agent-tools'];
+        const done = ids.filter(id => this.capstonesSubmitted[id]);
+        return { ids, done, missing: ids.filter(id => !this.capstonesSubmitted[id]) };
+    }
+
     // P1: record a passed autograded check. Idempotent; persisted via saveProgress.
     markLabCheckPassed(lessonId, checkId) {
         if (!this.labChecksPassed[lessonId]) this.labChecksPassed[lessonId] = [];
@@ -1146,6 +1180,8 @@ class AICourse {
         this.timeSpent = 0;
         this.confidenceLevels = {};
         this.currentLessonId = null;
+        this.labChecksPassed = {};
+        this.capstonesSubmitted = {};
 
         this.saveProgress();
         location.reload();
@@ -1176,10 +1212,24 @@ class AICourse {
         
         if (modal && message && finalScore && timeSpentEl && topicsMastered && weakAreasList) {
             if (progress >= 100) {
-                message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
-                    Congratulations! You've completed the entire AI & ML course from 101 to PhD level!<br>
-                    You now have a comprehensive understanding of AI, ML, and Generative AI principles and applications.
-                </p>`;
+                const gate = this.capstoneGate();
+                // Grandfather: saves predating the gate (key absent) with every
+                // lesson already done keep the full badge without resubmitting.
+                const preGateSave = this._loadedWithoutCapstoneKey && gate.done.length === 0;
+                if (gate.missing.length === 0 || preGateSave) {
+                    message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
+                        Congratulations! You've completed the entire AI & ML course from 101 to PhD level!<br>
+                        You now have a comprehensive understanding of AI, ML, and Generative AI principles and applications.
+                        ${gate.missing.length === 0 ? '<br>🏅 <strong>Portfolio-Complete:</strong> all 3 capstones submitted.' : ''}
+                    </p>`;
+                } else {
+                    message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
+                        Lessons complete — ${gate.done.length}/3 capstones submitted.<br>
+                        Submit the portfolio capstones to earn the <strong>Portfolio-Complete</strong> badge:
+                        missing ${gate.missing.join(', ')}.<br>
+                        Open each capstone lesson and use the submission widget.
+                    </p>`;
+                }
             } else if (progress >= 50) {
                 message.innerHTML = `<p style="text-align: center; color: var(--text-secondary);">
                     Great progress! You've completed ${progress}% of the course.<br>

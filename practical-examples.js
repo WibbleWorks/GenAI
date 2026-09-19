@@ -1089,6 +1089,53 @@ print(f"Model Accuracy: {accuracy:.2f}")
         }
     };
 
+    // Portfolio submission widget (P2). ${renderCapstoneSubmit('rag-chatbot')}
+    // renders a placeholder; mountCapstoneSubmit injects the self-score form.
+    // Submissions persist via course.markCapstoneSubmitted and gate the
+    // completion badge (see main.js completeCourse).
+    function renderCapstoneSubmit(capstoneId) {
+        return `<div class="capstone-submit-mount" data-capstone-submit="${capstoneId}"></div>`;
+    }
+
+    window.mountCapstoneSubmit = function(container) {
+        const mounts = (container || document).querySelectorAll('[data-capstone-submit]');
+        mounts.forEach(mount => {
+            if (mount.dataset.mounted === '1') return;
+            const cid = mount.dataset.capstoneSubmit;
+            const sub = window.course && window.course.capstonesSubmitted ? window.course.capstonesSubmitted[cid] : null;
+            mount.innerHTML = `
+                <div style="padding: 1rem; background: var(--surface-light); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                        ${sub ? `✓ Submitted: self-score ${escapeHtml(String(sub.selfScore))}/20 on ${escapeHtml(sub.date)}` : 'Not yet submitted. Finish SUBMISSION.md, then record your self-score (14/20 to pass, ≥3 every row).'}
+                    </p>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                        <input id="capstone-score-${cid}" type="number" min="0" max="20" placeholder="self-score /20" aria-label="Self score out of 20"
+                            style="width: 9rem; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-primary);">
+                        <input id="capstone-link-${cid}" type="text" placeholder="artifact link (repo/PR/folder)" aria-label="Artifact link"
+                            style="flex: 1; min-width: 12rem; padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-primary);">
+                        <button class="btn-small" onclick="submitCapstone('${cid}')" style="padding: 0.4rem 0.75rem;">Submit</button>
+                    </div>
+                </div>`;
+            mount.dataset.mounted = '1';
+        });
+    };
+
+    window.submitCapstone = function(capstoneId) {
+        const scoreEl = document.getElementById(`capstone-score-${capstoneId}`);
+        const linkEl = document.getElementById(`capstone-link-${capstoneId}`);
+        const score = scoreEl ? parseInt(scoreEl.value, 10) : NaN;
+        const link = linkEl ? linkEl.value.trim() : '';
+        if (!Number.isInteger(score) || score < 0 || score > 20) {
+            alert('Enter an integer self-score 0-20.');
+            return;
+        }
+        if (!link) {
+            alert('Add an artifact link (repo, PR, or folder) so a reviewer can verify.');
+            return;
+        }
+        if (window.course) window.course.markCapstoneSubmitted(capstoneId, score, link);
+    };
+
     // After a lesson is rendered, find any .interactive-lab-mount placeholders
     // and inject the real lab HTML. Called from main.js showLesson.
     window.mountInteractiveLabs = function(container) {
@@ -4639,6 +4686,12 @@ print(result)
                     <li>One improvement backlog: 3 ranked next-changes derived from the eval results</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/rag-chatbot/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('rag-chatbot')}
+            </div>
         `,
 
         concepts: ["RAG end-to-end", "Chunking", "Embeddings", "Retrieval", "MMR", "Reranking", "Citations", "FastAPI serving", "Ragas eval", "Capstone rubric"],
@@ -4717,6 +4770,14 @@ print(result)
             title: "RAG Pipeline Walkthrough",
             description: "Walk the full end-to-end RAG pipeline: ingest -> chunk -> embed -> index -> retrieve -> rerank -> generate -> cite -> evaluate.",
             controls: ["nextStep", "previousStep"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/rag-chatbot/.
+        capstone: {
+            id: "rag-chatbot",
+            starterPath: "capstones/rag-chatbot/starter",
+            goldenSet: "capstones/rag-chatbot/expected/golden_qa.json",
+            latencyBudgetP95: "4s"
         }
     };
 
@@ -4980,6 +5041,12 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
                     <li>Self-score against rubric in "Self-assessment" section</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/finetune-slm/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('finetune-slm')}
+            </div>
         `,
 
         concepts: ["Instruction tuning", "Data preparation", "Deduplication", "QLoRA", "Adapter merge", "Base vs fine-tuned eval", "Model card", "Reproducibility"],
@@ -5058,6 +5125,13 @@ print(f"Improvement: +{matches_ft - matches_base} ({(matches_ft - matches_base) 
             title: "LoRA Trainer Scoring",
             description: "Watch training loss decrease as the LoRA adapter learns.",
             controls: ["addNeuronLayer", "changeNNActivation", "updateLearningRate", "trainNN"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/finetune-slm/.
+        capstone: {
+            id: "finetune-slm",
+            starterPath: "capstones/finetune-slm/starter",
+            goldenSet: "capstones/finetune-slm/expected/golden_eval.json"
         }
     };
 
@@ -5329,6 +5403,12 @@ print(f"\\nRed-team pass rate: {pass_rate*100:.0f}%")
                     <li>Self-score against rubric in "Self-assessment" section</li>
                 </ol>
             </div>
+
+            <div class="lesson-section">
+                <h3>📦 Portfolio submission</h3>
+                <p>Work from <code>capstones/agent-tools/</code>: <strong>STARTER.md</strong> (setup) → build → <strong>SUBMISSION.md</strong> (checklist) → self-score. <strong>SOLUTION.md</strong> shows the exemplar trade-offs; <strong>REVIEWER.md</strong> is the scoring script — read it first.</p>
+                ${renderCapstoneSubmit('agent-tools')}
+            </div>
         `,
 
         concepts: ["Tool calling agent", "AgentExecutor", "Safety guardrails", "Input validation", "Output validation", "Observability", "Red-teaming", "Reproducibility"],
@@ -5407,6 +5487,14 @@ print(f"\\nRed-team pass rate: {pass_rate*100:.0f}%")
             title: "Agent Reasoning Simulator",
             description: "Watch the agent loop: observe -> think -> act -> evaluate. Try Planning Agent mode for multi-step tasks.",
             controls: ["agentTypeSelector", "runAgent"]
+        },
+
+        // P2 portfolio metadata (PLAN §1B). Points at capstones/agent-tools/.
+        capstone: {
+            id: "agent-tools",
+            starterPath: "capstones/agent-tools/starter",
+            goldenSet: "capstones/agent-tools/expected/redteam.json",
+            minRedTeam: 10
         }
     };
 

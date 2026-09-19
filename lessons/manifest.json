@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-19T20:40:54.641Z",
+  "generated": "2026-09-19T20:49:26.379Z",
   "count": 21,
   "lessons": [
     {
@@ -133,21 +133,21 @@
       "level": "research",
       "number": 19,
       "path": "lessons/research/capstone_rag_chatbot.json",
-      "hash": "f6fd1cd440c4fd70"
+      "hash": "829a73db61e9199c"
     },
     {
       "id": "capstone_finetune",
       "level": "research",
       "number": 20,
       "path": "lessons/research/capstone_finetune.json",
-      "hash": "5e24f53f9efb654a"
+      "hash": "499efece4f09423c"
     },
     {
       "id": "capstone_agent",
       "level": "research",
       "number": 21,
       "path": "lessons/research/capstone_agent.json",
-      "hash": "c911690297a70a34"
+      "hash": "296151a7f7a8a8d3"
     }
   ]
 }

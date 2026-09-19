@@ -1,0 +1,22 @@
+[
+  {"question": "How do I cancel my subscription?", "must_contain": "cancel your subscription", "must_cite": ["billing"]},
+  {"question": "Can I get a refund?", "must_contain": "Refunds", "must_cite": ["billing"]},
+  {"question": "How long do I have to request a refund?", "must_contain": "14 days", "must_cite": ["billing"]},
+  {"question": "Can I downgrade mid-cycle?", "must_contain": "downgrade", "must_cite": ["billing"]},
+  {"question": "When does a downgrade take effect?", "must_contain": "next month", "must_cite": ["billing"]},
+  {"question": "Where do I cancel?", "must_contain": "billing page", "must_cite": ["billing"]},
+  {"question": "How do I reset my password?", "must_contain": "reset password", "must_cite": ["password"]},
+  {"question": "Where is the password reset option?", "must_contain": "settings", "must_cite": ["password"]},
+  {"question": "How long is the reset link valid?", "must_contain": "one hour", "must_cite": ["password"]},
+  {"question": "Can support see my password?", "must_contain": "cannot see", "must_cite": ["password"]},
+  {"question": "How do I get the reset email?", "must_contain": "emailed", "must_cite": ["password"]},
+  {"question": "How long is the laptop warranty?", "must_contain": "two year warranty", "must_cite": ["warranty"]},
+  {"question": "What does the warranty cover?", "must_contain": "manufacturing", "must_cite": ["warranty"]},
+  {"question": "Does the warranty cover accidental damage?", "must_contain": "accidental damage", "must_cite": ["warranty"]},
+  {"question": "What do I need to start a warranty claim?", "must_contain": "serial number", "must_cite": ["warranty"]},
+  {"question": "Who do I contact about a defective laptop?", "must_contain": "support", "must_cite": ["warranty"]},
+  {"question": "I want my money back for a purchase last week", "must_contain": "Refunds", "must_cite": ["billing"]},
+  {"question": "I forgot my password, what now?", "must_contain": "reset", "must_cite": ["password"]},
+  {"question": "My laptop screen arrived cracked, is that covered?", "must_contain": "warranty", "must_cite": ["warranty"]},
+  {"question": "Change my plan to a cheaper one", "must_contain": "downgrade", "must_cite": ["billing"]}
+]
